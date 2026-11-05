@@ -2,8 +2,9 @@
    State color uses the documented subtotal. Blank totals stay undisclosed.
    Arc width uses a square-root scale of the state-allocated amount. */
 (function () {
-  const DARK = ["#17383d", "#1f6a64", "#3f9a78", "#e0b15a", "#f6e7c4", "#fff8ee"];
-  const LIGHT = ["#d5e6e2", "#7eb8ad", "#2c8f84", "#d4892e", "#8a3d24", "#2a1410"];
+  /* Log ramps: more green means more documented funding. Blank totals use the hatch, not the low stop. */
+  const LIGHT = ["#e7f6ec", "#b7e4c7", "#6fbf8d", "#2d9a58", "#15723c", "#08472a"];
+  const DARK = ["#143528", "#1d6a40", "#2f9a58", "#6ed492", "#c6f5d4", "#f3fff6"];
   const BASIS = {
     announced_project_total: "Announced commitment",
     completed_project_total: "Completed project",
@@ -71,7 +72,7 @@
   document.getElementById("stat-value").textContent = formatLong(data.total);
 
   function theme() {
-    return document.documentElement.getAttribute("data-theme") === "light" ? "light" : "dark";
+    return document.documentElement.getAttribute("data-theme") === "dark" ? "dark" : "light";
   }
   function reduced() {
     return reducedMotion.matches;
@@ -813,7 +814,7 @@
       const c = centroids.get(s.code);
       if (!c) continue;
       const t = norm(s.total);
-      const darkInk = theme() === "dark" ? t > 0.7 : t <= 0.58;
+      const darkInk = theme() === "light" ? t < 0.55 : t > 0.62;
       const fill = darkInk ? "#1a140c" : "#fffdf8";
       const halo = darkInk ? "rgba(255,250,242,0.75)" : "rgba(20,12,8,0.35)";
       const node = labels.append("text")
@@ -1014,6 +1015,71 @@
       closePanel();
     }
   });
+  function measureLine(p) {
+    const parts = [];
+    const basis = BASIS[p.basis];
+    if (basis) parts.push(basis);
+    const status = STATUS[p.status];
+    const repeat =
+      (p.status === "announced" && p.basis === "announced_project_total") ||
+      (p.status === "completed" && p.basis === "completed_project_total");
+    if (status && !repeat) parts.push(status);
+    if (p.qualifier === "at least") parts.push("At least");
+    if (p.qualifier === "about") parts.push("About");
+    if (p.year) parts.push(p.year);
+    return parts.join(" · ");
+  }
+
+  function renderCompanies() {
+    const host = document.getElementById("companies");
+    if (!host || !data) return;
+    const companies = d3.groups(data.projects, (p) => p.firmGroup || p.firm).map(([name, projects]) => {
+      const list = projects.slice().sort((a, b) => (b.amount ?? -1) - (a.amount ?? -1) || a.project.localeCompare(b.project));
+      const total = d3.sum(list, (p) => p.amount || 0);
+      return { name, list, total, unpriced: list.filter((p) => p.amount == null).length };
+    });
+    companies.sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
+    host.innerHTML = companies.map((c) => {
+      const priced = c.list.filter((p) => p.amount != null);
+      const qualifiers = new Set(priced.map((p) => p.qualifier));
+      let prefix = "";
+      if (priced.length && qualifiers.size === 1) {
+        if ([...qualifiers][0] === "at least") prefix = "At least ";
+        if ([...qualifiers][0] === "about") prefix = "About ";
+      }
+      const totalText = c.total > 0 ? prefix + formatLong(c.total) : "Undisclosed";
+      let meta = c.list.length + (c.list.length === 1 ? " record" : " records");
+      if (c.total > 0 && c.unpriced) meta += " · " + c.unpriced + " not in the total";
+      const entries = c.list.map((p) => {
+        const state = stateByCode.get(p.state);
+        const place = [state ? state.name : p.state, p.city].filter(Boolean).join(" · ");
+        const showFirm = p.firm && p.firm !== c.name;
+        const amountPrefix = p.qualifier === "about" ? "About " : p.qualifier === "at least" ? "At least " : "";
+        const amt = p.amount == null ? "Undisclosed" : amountPrefix + formatLong(p.amount);
+        return (
+          '<div class="entry">' +
+          '<p class="entry-amt">' + esc(amt) + "</p>" +
+          '<div class="entry-body">' +
+          (showFirm ? '<p class="entry-place">' + esc(p.firm) + "</p>" : "") +
+          '<p class="entry-title">' + esc(p.project) + "</p>" +
+          '<p class="entry-place">' + esc(place) + "</p>" +
+          '<p class="entry-basis">' + esc(measureLine(p)) + "</p>" +
+          (p.caveat ? '<p class="entry-note">' + esc(p.caveat) + "</p>" : "") +
+          '<p class="entry-source"><a href="' + esc(p.sourceUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(p.sourceTitle) + "</a></p>" +
+          "</div></div>"
+        );
+      }).join("");
+      return (
+        '<section class="company">' +
+        '<div class="company-head"><h3>' + esc(c.name) + '</h3><p class="company-total">' + esc(totalText) + "</p></div>" +
+        '<p class="company-meta">' + esc(meta) + "</p>" +
+        entries +
+        "</section>"
+      );
+    }).join("");
+  }
+
+  renderCompanies();
   setMode(mode);
   new ResizeObserver(schedule).observe(stage);
   renderLegend();

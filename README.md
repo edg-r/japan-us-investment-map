@@ -4,7 +4,9 @@ Live site: https://edg-r.github.io/japan-us-investment-map/
 
 A static map of documented investment commitments and transactions involving Japanese firms, from 2014 through 29 October 2026.
 
-The **heat map is the main view**. Each state’s color is its documented subtotal: the sum of sourced, state-specific amounts in the ledger. A blank total is drawn as “no state total.” It is not zero, and it is not foreign-direct-investment stock. The headline figure, **$41.036 billion**, is that sum across 41 states. Ten states have a record and no state total.
+The **heat map is the main view**. Each state’s color is its documented subtotal: the sum of sourced, state-specific amounts in the ledger, on a log scale where deeper green is more funding. A blank total is hatched, not drawn as zero. It is not foreign-direct-investment stock. The headline figure, **$41.036 billion**, is that sum across 41 states. Ten states have a record and no state total.
+
+Scroll past the map for the methodology and a company-by-company breakdown.
 
 Flows are corporate links from a Japanese parent office to a U.S. project, headquarters, or state reference. **Arc width follows the record’s documented amount** on a square-root scale. Dashed arcs have no state-allocated amount. They are not traced bank transfers.
 

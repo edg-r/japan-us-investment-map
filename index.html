@@ -14,12 +14,13 @@
       if (!t) {
         try { t = localStorage.getItem("ji-theme"); } catch (e) {}
       }
-      if (t !== "light" && t !== "dark") t = "dark";
+      if (t !== "light" && t !== "dark") t = "light";
       document.documentElement.setAttribute("data-theme", t);
     })();
   </script>
 </head>
 <body>
+  <div class="map-view">
   <header>
     <div class="brand">
       <h1>Japanese investment, by state</h1>
@@ -54,6 +55,35 @@
     </div>
     <aside id="panel" hidden></aside>
   </main>
+  </div>
+
+  <article class="appendix" id="report">
+    <div class="appendix-inner">
+      <p class="eyebrow">Notes</p>
+      <h2>Methodology</h2>
+      <p class="lead">Documented investment commitments and transactions involving Japanese firms, 2014 through 29 October 2026. The $41.036 billion on the map is that documented subtotal.</p>
+
+      <h3>How the records were built</h3>
+      <p>Six regional research agents searched company releases, filings, and government records. They looked for strong primary-source examples in each state. The ledger holds 67 records. Forty-seven have a state-specific amount. Twenty are undisclosed or not allocated to a state. This is not a census of every Japanese investment in the United States.</p>
+      <p>Each record names a Japanese parent, a U.S. place, the amount when a source states one, the year, the measurement basis, and the status. Origin points are approximate parent-office cities. U.S. points are approximate project cities, or a company headquarters when that is what the source gives. If the city is unresolved, the map uses the state center.</p>
+
+      <h3>What a state total means</h3>
+      <p>The color of a state is the sum of its documented, state-specific amounts, each record counted once. A later project total replaces earlier nested announcements for the same scope. A global acquisition price is not given to the headquarters state. A partner’s separate contribution is not added again when it is already inside a whole project budget.</p>
+      <p>North Carolina is the arithmetic in plain sight: Toyota’s $13.9 billion campus scope plus Fujifilm’s $3.2 billion campus scope is the $17.1 billion on the map. That is not verified completed expenditure, and it is not the state’s foreign-direct-investment stock.</p>
+      <p>Forty-one states have a number. Ten have a record and no state total. The map leaves those hatched. A blank is not zero, and no record is not evidence of no investment.</p>
+
+      <h3>Announced, completed, and acquired</h3>
+      <p>The $41.036 billion mixes three measures. $36.090 billion is announced project or financing commitments. $3.708 billion is reported completed project value. $1.238 billion is acquisition or equity consideration. An announcement is not money spent. An acquisition price is not new construction. Figures are nominal, not inflation-adjusted, and they are not a stock of investment still in place.</p>
+
+      <h3>What this is not</h3>
+      <p>These figures are not FDI stock and not verified bank transfers from Japan. A Japanese owner can pay with U.S. borrowing, retained earnings, or a partner’s funds. Ownership is not financing origin. Some amounts are whole project budgets shared with other companies. Louisiana’s $4 billion Blue Point figure is the joint venture, not Mitsui’s share alone.</p>
+      <p>An arc links a parent office to a U.S. project or company reference. It shows a corporate connection, not the path the money traveled.</p>
+
+      <h2 id="by-company">Funding by company</h2>
+      <p class="lead">Firm groups follow the ledger. Each documented amount is counted once. Records with no state amount are listed and left undisclosed.</p>
+      <div id="companies"></div>
+    </div>
+  </article>
 
   <dialog id="notes" aria-labelledby="notes-title">
     <div class="dialog-body">
