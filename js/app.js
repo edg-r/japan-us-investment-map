@@ -49,8 +49,9 @@
   const totals = data.states.map((s) => s.total).filter((v) => v != null);
   const MIN = d3.min(totals);
   const MAX = d3.max(totals);
-  const widthScale = d3.scaleSqrt().domain([0, MAX]).range([0.85, 5.4]);
-  const opScale = d3.scaleSqrt().domain([MIN, MAX]).range([0.28, 0.7]).clamp(true);
+  const maxFlow = d3.max(data.projects, (p) => p.amount) || MAX;
+  const widthScale = d3.scalePow().exponent(0.72).domain([0, maxFlow]).range([2.8, 15]);
+  const opScale = d3.scalePow().exponent(0.55).domain([0, maxFlow]).range([0.42, 1]).clamp(true);
 
   const qMode = new URLSearchParams(location.search).get("mode");
   let mode = qMode === "heat" || qMode === "flows" || qMode === "both" ? qMode : "both";
@@ -247,7 +248,7 @@
       '<div class="key-row"><span class="swatch"></span><span>No state total</span></div>' +
       "</div>" +
       '<div class="flow-key">' +
-      '<div class="key-row"><span class="strokes" aria-hidden="true"><i style="height:1.5px"></i><i style="height:3px"></i><i style="height:6px"></i></span><span>Width follows amount</span></div>' +
+      '<div class="key-row"><span class="strokes" aria-hidden="true"><i style="height:2.5px"></i><i style="height:6px"></i><i style="height:12px"></i></span><span>Width follows amount</span></div>' +
       '<div class="key-row"><span class="dash-sample" aria-hidden="true"></span><span>No amount</span></div>' +
       "</div>";
     legend.classList.toggle("is-heat-off", mode === "flows");
@@ -285,12 +286,12 @@
       const mine = states ? f.firmGroup === selectedCompany : !code || f.state === code;
       const hot = flowId ? f.id === flowId : mine && (!!code || !!states);
       if (hot) hotOrigins.add(f.originKey);
-      let op = f.amount == null ? 0.22 : opScale(f.amount);
-      let w = f.amount == null ? 0.85 : widthScale(f.amount);
-      if ((code || states) && !mine) op = 0.04;
+      let op = f.amount == null ? 0.4 : opScale(f.amount);
+      let w = f.amount == null ? 2.2 : widthScale(f.amount);
+      if ((code || states) && !mine) op = 0.07;
       if (hot) {
-        op = Math.min(0.96, op + 0.38);
-        w += 0.9;
+        op = 1;
+        w += 1.6;
       }
       if (f.quiet && !f.revealed) op = 0;
       f.path.style.strokeOpacity = String(op);
@@ -481,7 +482,7 @@
           '<article class="record' + (p.id === selectedFlow ? " is-current" : "") + '" id="rec-' + esc(p.id) + '">' +
           '<div class="record-top">' +
           '<button type="button" class="company-btn" data-company="' + esc(company) + '" aria-label="Show ' + esc(company) + ' across the Pacific">' +
-          '<span class="logo" aria-hidden="true">' + esc(monogram(company)) + '</span>' +
+          logoMark(company) +
           '<span class="name">' + esc(company) + "</span></button>" +
           '<p class="amt">' + esc(p.amount == null ? "Undisclosed" : formatLong(p.amount)) + "</p></div>" +
           '<p class="project">' + esc(p.project) + "</p>" +
@@ -510,6 +511,21 @@
     return ((parts[0] || "?").slice(0, 1) + (parts[1] ? parts[1].slice(0, 1) : "")).toUpperCase();
   }
 
+  const LOGO_READY = new Set("ajinomoto astellas astemo daikin denso etria fujifilm fujitsu hitachi honda kawasaki kikkoman kubota mazda-toyota mitsubishi-corporation mitsubishi-electric mitsubishi-heavy-industries mitsui-fudosan mitsui-jera mori-trust nippn nippon-steel nissui-corporation ntt olympus omron otsuka panasonic recruit resorttrust sekisui-chemical sekisui-house-reit softbank spiber sumitomo-rubber terumo tokyo-century tokyo-ohka-hamamatsu toray toyota yamato-kogyo yokohama-rubber".split(" "));
+
+  function logoSlug(name) {
+    return String(name).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  }
+
+  function logoMark(company) {
+    const mono = esc(monogram(company));
+    const slug = logoSlug(company);
+    if (!LOGO_READY.has(slug)) {
+      return '<span class="logo is-fallback" aria-hidden="true"><span class="mono">' + mono + "</span></span>";
+    }
+    return '<span class="logo" aria-hidden="true"><img src="logos/' + slug + '.png" alt="" onerror="this.parentNode.classList.add(\'is-fallback\')"><span class="mono">' + mono + "</span></span>";
+  }
+
   function projectsForCompany(name) {
     return data.projects
       .filter((p) => (p.firmGroup || p.firm) === name)
@@ -528,7 +544,8 @@
       '<button type="button" class="panel-close" data-close aria-label="Close details">×</button>' +
       (back ? '<button type="button" class="text-btn" data-back>Back to ' + esc(back.name) + "</button>" : "") +
       '<p class="kicker">Company</p>' +
-      "<h2 id=\"panel-title\" tabindex=\"-1\">" + esc(selectedCompany) + "</h2>" +
+      '<div class="company-lockup">' + logoMark(selectedCompany) +
+      "<h2 id=\"panel-title\" tabindex=\"-1\">" + esc(selectedCompany) + "</h2></div>" +
       '<p class="big">' + esc(total > 0 ? formatLong(total) : "Undisclosed") + "</p>" +
       '<p class="quiet">' + states.size + (states.size === 1 ? " state" : " states") + " · " + rows.length + (rows.length === 1 ? " record" : " records") + "</p>" +
       "</div>" +
@@ -854,11 +871,11 @@
           .attr("class", "mark")
           .attr("cx", d.xy[0])
           .attr("cy", d.xy[1])
-          .attr("r", 2.1)
+          .attr("r", 3.2)
           .attr("fill", "var(--flow-quiet)")
           .node();
       } else {
-        const size = Math.max(4.2, Math.min(12, widthScale(d.amount) * 2));
+        const size = Math.max(8, Math.min(22, (d.amount == null ? 2.2 : widthScale(d.amount)) * 1.45));
         mark = g.append("path")
           .attr("class", "arrow mark")
           .attr("d", arrowPath(shape.c, d.xy, size))
@@ -1071,7 +1088,7 @@
 
   function setTheme(next) {
     document.documentElement.setAttribute("data-theme", next);
-    try { localStorage.setItem("ji-theme-v2", next); } catch (e) {}
+    try { localStorage.setItem("ji-theme-v3", next); } catch (e) {}
     document.getElementById("theme").setAttribute(
       "aria-label",
       next === "dark" ? "Switch to light theme" : "Switch to dark theme"
