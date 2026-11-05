@@ -89,10 +89,11 @@
 
 
 * { box-sizing: border-box; }
-html, body { height: auto; }
+html, body { height: 100%; }
 body {
   margin: 0;
-  min-height: 100dvh;
+  height: 100dvh;
+  overflow: hidden;
   background: var(--bg);
   color: var(--ink);
   font-family: Inter, "Segoe UI", system-ui, sans-serif;
@@ -219,116 +220,35 @@ button:focus-visible, a:focus-visible, summary:focus-visible {
   grid-template-rows: auto minmax(0, 1fr);
 }
 main { position: relative; min-height: 0; }
-.appendix {
-  background: var(--bg);
-  color: var(--ink);
-  border-top: 1px solid var(--line);
-}
-.appendix-inner {
-  max-width: 920px;
-  margin: 0 auto;
-  padding: 72px 32px 96px;
-}
-.eyebrow {
-  margin: 0 0 10px;
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-.appendix h2 {
-  margin: 0 0 16px;
-  font-family: Newsreader, Georgia, serif;
-  font-weight: 500;
-  font-size: 40px;
-  letter-spacing: -0.03em;
-  line-height: 1.1;
-}
-.appendix h2 + .lead { margin-top: 0; }
-.appendix h3 {
-  margin: 36px 0 8px;
-  font-family: Newsreader, Georgia, serif;
-  font-weight: 500;
-  font-size: 26px;
-  letter-spacing: -0.02em;
-}
-.appendix p {
-  margin: 0 0 14px;
-  font-size: 17px;
-  line-height: 1.55;
-}
-.appendix a, .entry-title, .entry-note {
-  overflow-wrap: break-word;
-}
-.appendix .lead {
-  font-size: 18px;
-  line-height: 1.5;
-  max-width: 62ch;
-}
-.appendix #by-company { margin-top: 72px; }
-.company { padding-top: 8px; }
-.company-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 24px;
-  padding: 28px 0 6px;
-  border-top: 1px solid var(--line);
-}
-.company h3 {
+.company-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  max-width: 100%;
   margin: 0;
-  font-family: Newsreader, Georgia, serif;
-  font-weight: 500;
-  font-size: 28px;
-  letter-spacing: -0.03em;
-}
-.company-total {
-  margin: 0;
-  font-variant-numeric: tabular-nums;
-  font-weight: 600;
-  font-size: 18px;
-  white-space: nowrap;
-}
-.company-meta {
-  margin: 0 0 4px;
-  color: var(--muted);
-  font-size: 15px;
-}
-.entry {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  column-gap: 28px;
-  padding: 16px 0 18px;
-  border-top: 1px solid var(--line);
-}
-.entry-body { grid-column: 1; grid-row: 1; }
-.entry-amt { grid-column: 2; grid-row: 1; align-self: start; }
-.entry-title {
-  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-align: left;
   font-size: 16px;
   font-weight: 600;
   letter-spacing: -0.015em;
+  line-height: 1.25;
 }
-.entry-place, .entry-basis, .entry-note {
-  margin: 4px 0 0;
-  font-size: 15px;
-  line-height: 1.45;
-}
-.entry-place, .entry-basis { color: var(--muted); }
-.entry-amt {
-  margin: 0;
-  font-variant-numeric: tabular-nums;
+.company-btn .logo {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  background: #146c3a;
+  color: #fff;
+  font-size: 11px;
   font-weight: 600;
-  font-size: 15px;
-  text-align: right;
+  letter-spacing: 0.02em;
 }
-.entry a {
-  color: var(--ink);
-  font-size: 15px;
-  text-underline-offset: 3px;
-}
-.entry-source { margin: 8px 0 0; }
+.company-btn:hover .name { text-decoration: underline; text-underline-offset: 3px; }
 #stage {
   position: absolute;
   inset: 0;
@@ -706,12 +626,6 @@ dialog::backdrop { background: rgba(8, 10, 14, 0.64); }
   .grabber { display: block; }
   .big { font-size: 34px; }
   body.has-panel #legend { opacity: 0; visibility: hidden; }
-  .appendix-inner { padding: 48px 20px 72px; }
-  .appendix h2 { font-size: 32px; }
-  .appendix p, .appendix .lead { font-size: 16px; }
-  .company-head { flex-wrap: wrap; }
-  .entry { display: block; }
-  .entry-amt { margin: 0 0 8px; text-align: left; }
 }
 
 @media (prefers-reduced-motion: reduce) {

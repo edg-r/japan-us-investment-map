@@ -6,7 +6,7 @@ A static map of documented investment commitments and transactions involving Jap
 
 The **heat map is the main view**. Each state’s color is its documented subtotal: the sum of sourced, state-specific amounts in the ledger, on a log scale where deeper green is more funding. A blank total is hatched, not drawn as zero. It is not foreign-direct-investment stock. The headline figure, **$41.036 billion**, is that sum across 41 states. Ten states have a record and no state total.
 
-Scroll past the map for the methodology and a company-by-company breakdown.
+Click a state for the companies there. Click a company name to frame Japan and the Pacific and light that company’s other U.S. states.
 
 Flows are corporate links from a Japanese parent office to a U.S. project, headquarters, or state reference. **Arc width follows the record’s documented amount** on a square-root scale. Dashed arcs have no state-allocated amount. They are not traced bank transfers.
 

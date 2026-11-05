@@ -58,6 +58,8 @@
   let hoverFlow = null;
   let selectedCode = null;
   let selectedFlow = null;
+  let selectedCompany = null;
+  let returnState = null;
   let lastFocus = "NC";
   let introStarted = false;
   let timers = [];
@@ -183,12 +185,29 @@
       };
     }
     const legendH = 176;
-    const left = Math.min(220, Math.max(150, Math.round(w * 0.155)));
-    const sky = Math.max(120, Math.round(h * 0.22));
-    const lowerX = Math.max(Math.round(w * 0.33), left + 176);
+    const pacific = !!selectedCompany;
+    const left = pacific
+      ? Math.round(w * 0.30)
+      : Math.min(220, Math.max(150, Math.round(w * 0.155)));
+    const sky = pacific ? Math.round(h * 0.16) : Math.max(120, Math.round(h * 0.22));
+    const lowerX = pacific
+      ? Math.round(w * 0.46)
+      : Math.max(Math.round(w * 0.33), left + 176);
+    if (pacific) {
+      return {
+        mobile,
+        pacific,
+        lowerX,
+        japan: [28, 36, left, h - 40],
+        alaska: [left + 14, 12, lowerX - 18, Math.round(h * 0.26)],
+        hawaii: [left + 18, Math.round(h * 0.6), lowerX - 20, Math.round(h * 0.6) + 84],
+        lower: [lowerX, sky, w - 14, h - 12],
+      };
+    }
     const japanBottom = Math.round(h * 0.56);
     return {
       mobile,
+      pacific,
       lowerX,
       japan: [16, 8, left, japanBottom],
       alaska: [18, japanBottom + 8, left - 2, h - legendH - 4],
@@ -235,12 +254,23 @@
     legend.classList.toggle("is-flow-off", mode === "heat");
   }
 
+  function companyStates() {
+    if (!selectedCompany) return null;
+    return new Set(
+      data.projects
+        .filter((p) => (p.firmGroup || p.firm) === selectedCompany)
+        .map((p) => p.state)
+    );
+  }
+
   function applyFocus() {
-    const code = activeCode();
-    const flowId = hoverFlow || selectedFlow;
+    const states = companyStates();
+    const code = states ? null : activeCode();
+    const flowId = states ? null : (hoverFlow || selectedFlow);
     svg.selectAll(".state").each(function (d) {
-      const on = !code || d.properties.code === code;
-      this.style.opacity = code && !on ? "0.42" : "1";
+      const id = d.properties.code;
+      const on = states ? states.has(id) : !code || id === code;
+      this.style.opacity = on ? "1" : "0.22";
     });
     svg.selectAll(".active-ring").attr("display", code ? null : "none");
     if (code) {
@@ -252,12 +282,12 @@
     }
     const hotOrigins = new Set();
     for (const f of flowEls) {
-      const mine = !code || f.state === code;
-      const hot = flowId ? f.id === flowId : mine && !!code;
+      const mine = states ? f.firmGroup === selectedCompany : !code || f.state === code;
+      const hot = flowId ? f.id === flowId : mine && (!!code || !!states);
       if (hot) hotOrigins.add(f.originKey);
       let op = f.amount == null ? 0.22 : opScale(f.amount);
       let w = f.amount == null ? 0.85 : widthScale(f.amount);
-      if (code && !mine) op = 0.045;
+      if ((code || states) && !mine) op = 0.04;
       if (hot) {
         op = Math.min(0.96, op + 0.38);
         w += 0.9;
@@ -269,9 +299,10 @@
       if (hot) f.group.raise();
     }
     for (const o of originNodes) {
-      const hot = !code || hotOrigins.has(o.key);
-      o.node.style.opacity = !code || hot ? "1" : "0.25";
-      o.node.setAttribute("r", String(hot && code ? o.r + 1.5 : o.r));
+      const hot = hotOrigins.has(o.key);
+      const idle = !code && !states;
+      o.node.style.opacity = idle || hot ? "1" : "0.25";
+      o.node.setAttribute("r", String(hot && (code || states) ? o.r + 1.5 : o.r));
     }
     const showFlows = mode !== "heat";
     svg.select(".flows").attr("visibility", showFlows ? "visible" : "hidden");
@@ -439,30 +470,24 @@
       '<p class="big" id="panel-total">' + esc(formatLong(s.total)) + "</p>" +
       '<p class="quiet">' + esc(count) + "</p>" +
       mix +
-      '<p class="panel-note">Arcs are corporate links, not traced transfers from Japan.</p>' +
       "</div>" +
       '<div class="panel-scroll">' +
       rows.map((p) => {
         const chipHtml = chipsFor(p).map((c) =>
           '<li class="chip' + (c.strong ? " strong" : "") + '">' + esc(c.text) + "</li>"
         ).join("");
-        const extra = (p.note && p.note !== p.caveat) || (p.evidence && p.evidence !== p.caveat);
+        const company = p.firmGroup || p.firm;
         return (
           '<article class="record' + (p.id === selectedFlow ? " is-current" : "") + '" id="rec-' + esc(p.id) + '">' +
-          '<div class="record-top"><h3>' + esc(p.firm) + "</h3>" +
+          '<div class="record-top">' +
+          '<button type="button" class="company-btn" data-company="' + esc(company) + '" aria-label="Show ' + esc(company) + ' across the Pacific">' +
+          '<span class="logo" aria-hidden="true">' + esc(monogram(company)) + '</span>' +
+          '<span class="name">' + esc(company) + "</span></button>" +
           '<p class="amt">' + esc(p.amount == null ? "Undisclosed" : formatLong(p.amount)) + "</p></div>" +
           '<p class="project">' + esc(p.project) + "</p>" +
-          (p.parent && p.parent !== p.firm ? '<p class="parent">' + esc(p.parent) + "</p>" : "") +
+          (p.firm && p.firm !== company ? '<p class="parent">' + esc(p.firm) + "</p>" : "") +
           '<ul class="chips">' + chipHtml + "</ul>" +
-          (p.caveat ? '<p class="caveat">' + esc(p.caveat) + "</p>" : "") +
-          '<p class="route">' + esc(routeLine(p)) + "</p>" +
           '<a class="source" href="' + esc(p.sourceUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(p.sourceTitle) + "</a>" +
-          (extra
-            ? "<details><summary>Scope note</summary>" +
-              (p.note ? "<p>" + esc(p.note) + "</p>" : "") +
-              (p.evidence ? "<p>" + esc(p.evidence) + "</p>" : "") +
-              "</details>"
-            : "") +
           "</article>"
         );
       }).join("") +
@@ -480,34 +505,108 @@
     }
   }
 
+  function monogram(name) {
+    const parts = String(name).split(/[^A-Za-z0-9]+/).filter(Boolean);
+    return ((parts[0] || "?").slice(0, 1) + (parts[1] ? parts[1].slice(0, 1) : "")).toUpperCase();
+  }
+
+  function projectsForCompany(name) {
+    return data.projects
+      .filter((p) => (p.firmGroup || p.firm) === name)
+      .slice()
+      .sort((a, b) => (b.amount ?? -1) - (a.amount ?? -1) || a.state.localeCompare(b.state));
+  }
+
+  function renderCompanyPanel(focusTitle) {
+    const rows = projectsForCompany(selectedCompany);
+    const total = d3.sum(rows, (p) => p.amount || 0);
+    const states = new Set(rows.map((p) => p.state));
+    const back = returnState ? stateByCode.get(returnState) : null;
+    panel.innerHTML =
+      '<div class="grabber" aria-hidden="true"></div>' +
+      '<div class="panel-head">' +
+      '<button type="button" class="panel-close" data-close aria-label="Close details">×</button>' +
+      (back ? '<button type="button" class="text-btn" data-back>Back to ' + esc(back.name) + "</button>" : "") +
+      '<p class="kicker">Company</p>' +
+      "<h2 id=\"panel-title\" tabindex=\"-1\">" + esc(selectedCompany) + "</h2>" +
+      '<p class="big">' + esc(total > 0 ? formatLong(total) : "Undisclosed") + "</p>" +
+      '<p class="quiet">' + states.size + (states.size === 1 ? " state" : " states") + " · " + rows.length + (rows.length === 1 ? " record" : " records") + "</p>" +
+      "</div>" +
+      '<div class="panel-scroll">' +
+      rows.map((p) => {
+        const state = stateByCode.get(p.state);
+        const chipHtml = chipsFor(p).map((c) =>
+          '<li class="chip' + (c.strong ? " strong" : "") + '">' + esc(c.text) + "</li>"
+        ).join("");
+        return (
+          '<article class="record">' +
+          '<div class="record-top"><h3>' + esc(state ? state.name : p.state) + "</h3>" +
+          '<p class="amt">' + esc(p.amount == null ? "Undisclosed" : formatLong(p.amount)) + "</p></div>" +
+          '<p class="project">' + esc(p.project) + "</p>" +
+          '<ul class="chips">' + chipHtml + "</ul>" +
+          '<a class="source" href="' + esc(p.sourceUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(p.sourceTitle) + "</a>" +
+          "</article>"
+        );
+      }).join("") +
+      "</div>";
+    document.body.classList.add("has-panel");
+    panel.hidden = false;
+    requestAnimationFrame(() => panel.classList.add("is-in"));
+    if (focusTitle) {
+      const title = document.getElementById("panel-title");
+      if (title) title.focus({ preventScroll: true });
+    }
+  }
+
+  function openCompany(name, focusTitle) {
+    if (!projectsForCompany(name).length) return;
+    if (!selectedCompany) returnState = selectedCode;
+    selectedCompany = name;
+    selectedFlow = null;
+    hideTip();
+    renderCompanyPanel(focusTitle !== false);
+    history.replaceState(null, "", "#co-" + encodeURIComponent(name));
+    draw();
+  }
+
   function openState(code, focusTitle) {
+    const reframed = !!selectedCompany;
+    selectedCompany = null;
     selectedCode = code;
     selectedFlow = null;
     lastFocus = code;
     hideTip();
     renderPanel(focusTitle !== false);
     history.replaceState(null, "", "#" + code);
-    applyFocus();
+    if (reframed) draw();
+    else applyFocus();
   }
   function openRecord(id, focusTitle) {
     const p = projectById.get(id);
     if (!p) return;
+    const reframed = !!selectedCompany;
+    selectedCompany = null;
     selectedCode = p.state;
     selectedFlow = id;
     lastFocus = p.state;
     hideTip();
     renderPanel(focusTitle !== false);
     history.replaceState(null, "", "#" + encodeURIComponent(id));
-    applyFocus();
+    if (reframed) draw();
+    else applyFocus();
   }
   function closePanel() {
+    const reframed = !!selectedCompany;
+    selectedCompany = null;
+    returnState = null;
     selectedCode = null;
     selectedFlow = null;
     panel.classList.remove("is-in");
     panel.hidden = true;
     document.body.classList.remove("has-panel");
     history.replaceState(null, "", location.pathname + location.search);
-    applyFocus();
+    if (reframed) draw();
+    else applyFocus();
     const hit = hits.get(lastFocus);
     if (hit) {
       for (const [c, node] of hits) node.setAttribute("tabindex", c === lastFocus ? "0" : "-1");
@@ -689,6 +788,7 @@
       flowData.push({
         id: p.id,
         state: p.state,
+        firmGroup: p.firmGroup || p.firm,
         amount: p.amount,
         quiet: p.amount == null,
         originKey: p.origin.map((n) => n.toFixed(2)).join(","),
@@ -768,6 +868,7 @@
       flowEls.push({
         id: d.id,
         state: d.state,
+        firmGroup: d.firmGroup,
         amount: d.amount,
         quiet: d.quiet,
         originKey: d.originKey,
@@ -940,7 +1041,8 @@
     if (!booted) {
       booted = true;
       const hash = decodeURIComponent(location.hash.replace(/^#/, ""));
-      if (hash && projectById.has(hash)) openRecord(hash, false);
+      if (hash.startsWith("co-")) openCompany(decodeURIComponent(hash.slice(3)), false);
+      else if (hash && projectById.has(hash)) openRecord(hash, false);
       else if (hash && stateByCode.has(hash)) openState(hash, false);
     } else if (selectedCode) {
       applyFocus();
@@ -969,7 +1071,7 @@
 
   function setTheme(next) {
     document.documentElement.setAttribute("data-theme", next);
-    try { localStorage.setItem("ji-theme", next); } catch (e) {}
+    try { localStorage.setItem("ji-theme-v2", next); } catch (e) {}
     document.getElementById("theme").setAttribute(
       "aria-label",
       next === "dark" ? "Switch to light theme" : "Switch to dark theme"
@@ -1007,7 +1109,19 @@
     document.getElementById("notes").showModal();
   });
   panel.addEventListener("click", (event) => {
-    if (event.target.closest("[data-close]")) closePanel();
+    if (event.target.closest("[data-close]")) {
+      closePanel();
+      return;
+    }
+    if (event.target.closest("[data-back]")) {
+      const back = returnState;
+      selectedCompany = null;
+      if (back) openState(back);
+      else closePanel();
+      return;
+    }
+    const company = event.target.closest("[data-company]");
+    if (company) openCompany(company.getAttribute("data-company"));
   });
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && selectedCode && !document.querySelector("dialog[open]")) {
@@ -1015,71 +1129,6 @@
       closePanel();
     }
   });
-  function measureLine(p) {
-    const parts = [];
-    const basis = BASIS[p.basis];
-    if (basis) parts.push(basis);
-    const status = STATUS[p.status];
-    const repeat =
-      (p.status === "announced" && p.basis === "announced_project_total") ||
-      (p.status === "completed" && p.basis === "completed_project_total");
-    if (status && !repeat) parts.push(status);
-    if (p.qualifier === "at least") parts.push("At least");
-    if (p.qualifier === "about") parts.push("About");
-    if (p.year) parts.push(p.year);
-    return parts.join(" · ");
-  }
-
-  function renderCompanies() {
-    const host = document.getElementById("companies");
-    if (!host || !data) return;
-    const companies = d3.groups(data.projects, (p) => p.firmGroup || p.firm).map(([name, projects]) => {
-      const list = projects.slice().sort((a, b) => (b.amount ?? -1) - (a.amount ?? -1) || a.project.localeCompare(b.project));
-      const total = d3.sum(list, (p) => p.amount || 0);
-      return { name, list, total, unpriced: list.filter((p) => p.amount == null).length };
-    });
-    companies.sort((a, b) => b.total - a.total || a.name.localeCompare(b.name));
-    host.innerHTML = companies.map((c) => {
-      const priced = c.list.filter((p) => p.amount != null);
-      const qualifiers = new Set(priced.map((p) => p.qualifier));
-      let prefix = "";
-      if (priced.length && qualifiers.size === 1) {
-        if ([...qualifiers][0] === "at least") prefix = "At least ";
-        if ([...qualifiers][0] === "about") prefix = "About ";
-      }
-      const totalText = c.total > 0 ? prefix + formatLong(c.total) : "Undisclosed";
-      let meta = c.list.length + (c.list.length === 1 ? " record" : " records");
-      if (c.total > 0 && c.unpriced) meta += " · " + c.unpriced + " not in the total";
-      const entries = c.list.map((p) => {
-        const state = stateByCode.get(p.state);
-        const place = [state ? state.name : p.state, p.city].filter(Boolean).join(" · ");
-        const showFirm = p.firm && p.firm !== c.name;
-        const amountPrefix = p.qualifier === "about" ? "About " : p.qualifier === "at least" ? "At least " : "";
-        const amt = p.amount == null ? "Undisclosed" : amountPrefix + formatLong(p.amount);
-        return (
-          '<div class="entry">' +
-          '<p class="entry-amt">' + esc(amt) + "</p>" +
-          '<div class="entry-body">' +
-          (showFirm ? '<p class="entry-place">' + esc(p.firm) + "</p>" : "") +
-          '<p class="entry-title">' + esc(p.project) + "</p>" +
-          '<p class="entry-place">' + esc(place) + "</p>" +
-          '<p class="entry-basis">' + esc(measureLine(p)) + "</p>" +
-          (p.caveat ? '<p class="entry-note">' + esc(p.caveat) + "</p>" : "") +
-          '<p class="entry-source"><a href="' + esc(p.sourceUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(p.sourceTitle) + "</a></p>" +
-          "</div></div>"
-        );
-      }).join("");
-      return (
-        '<section class="company">' +
-        '<div class="company-head"><h3>' + esc(c.name) + '</h3><p class="company-total">' + esc(totalText) + "</p></div>" +
-        '<p class="company-meta">' + esc(meta) + "</p>" +
-        entries +
-        "</section>"
-      );
-    }).join("");
-  }
-
-  renderCompanies();
   setMode(mode);
   new ResizeObserver(schedule).observe(stage);
   renderLegend();
