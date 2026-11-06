@@ -77,6 +77,9 @@
 
   const qMode = new URLSearchParams(location.search).get("mode");
   let mode = qMode === "heat" || qMode === "flows" || qMode === "both" ? qMode : "both";
+  let hoverCompany = null;
+  let hoveredPanelRow = null;
+  let focusedPanelRow = null;
   let hoverCode = null;
   let hoverFlow = null;
   let selectedCode = null;
@@ -87,6 +90,11 @@
   let introRunning = false;
   let renderedFrame = "";
   let timers = [];
+  let introFrame = null;
+  const motionButton = document.getElementById("flow-motion");
+  const MOTION_LIMIT = 64;
+  let motionPaused = false;
+  try { motionPaused = localStorage.getItem("ji-flow-motion-paused") === "true"; } catch (e) {}
   let flowEls = [];
   let hits = new Map();
   let centroids = new Map();
@@ -203,6 +211,8 @@
   }
 
   function clearTimers() {
+    if (introFrame != null) cancelAnimationFrame(introFrame);
+    introFrame = null;
     timers.forEach(clearTimeout);
     timers = [];
   }
@@ -265,6 +275,7 @@
       '<div class="flow-key">' +
       '<div class="key-row"><span class="strokes" aria-hidden="true"><i style="height:0.65px"></i><i style="height:2px"></i><i style="height:4px"></i></span><span>Width follows amount</span></div>' +
       '<div class="key-row"><span class="dash-sample" aria-hidden="true"></span><span>No amount</span></div>' +
+      '<p class="motion-note">Moving dots show direction of investment, not traced transfers.</p>' +
       "</div>";
     const bar = legend.querySelector(".bar");
     if (previousGradient && previousGradient !== bar.style.background && !reduced()) {
@@ -286,7 +297,9 @@
   function applyFocus() {
     companyChip.hidden = !selectedCompany;
     document.getElementById("company-focus-label").textContent = selectedCompany ? "Showing: " + selectedCompany : "";
-    const states = companyStates();
+    const company = hoverCompany || selectedCompany;
+    // A temporary state preview takes precedence over a selected company.
+    const states = hoverCompany ? companyByName.get(hoverCompany).states : hoverCode ? null : companyStates();
     const code = states ? null : activeCode();
     const flowId = states ? null : (hoverFlow || selectedFlow);
     svg.selectAll(".state").each(function (d) {
@@ -304,7 +317,7 @@
     }
     const hotOrigins = new Set();
     for (const f of flowEls) {
-      const mine = states ? f.firmGroup === selectedCompany : !code || f.state === code;
+      const mine = states ? f.firmGroup === company : !code || f.state === code;
       const hot = flowId ? f.id === flowId : mine && (!!code || !!states);
       if (hot) hotOrigins.add(f.originKey);
       let op = 0.27;
@@ -318,6 +331,10 @@
       f.path.style.strokeOpacity = String(op);
       f.path.style.strokeWidth = w + "px";
       if (f.mark) f.mark.style.opacity = f.revealed ? String(op) : "0";
+      if (f.motion) {
+        f.motion.style.opacity = String(hot ? 0.85 : (code || states) && !mine ? 0.025 : 0.3);
+        f.animation.updatePlaybackRate(hot ? 1.2 : 1);
+      }
       if (hot) f.group.raise();
     }
     for (const o of originNodes) {
@@ -343,11 +360,40 @@
     }
     legend.classList.toggle("is-heat-off", mode === "flows");
     legend.classList.toggle("is-flow-off", mode === "heat");
+    syncFlowMotion();
+  }
+
+  // One native dash animation per priced arc, capped independently of ledger size.
+  // Negative offsets carry the mark forward along the Japan-to-state path.
+  function syncFlowMotion() {
+    const available = !reduced() && mode !== "heat" && !introRunning && introStarted;
+    const running = available && !motionPaused && !document.hidden;
+    for (const f of flowEls) {
+      if (!f.animation) continue;
+      f.motion.style.visibility = available ? "visible" : "hidden";
+      if (running && f.animation.playState !== "running") f.animation.play();
+      else if (!running && f.animation.playState !== "paused") f.animation.pause();
+    }
+    const label = motionPaused ? "Play motion" : "Pause motion";
+    motionButton.setAttribute("aria-label", label);
+    motionButton.setAttribute("aria-pressed", String(motionPaused));
+    motionButton.title = label;
+    motionButton.querySelector(".control-tip").textContent = label;
+    motionButton.disabled = reduced();
+    if (reduced()) {
+      motionButton.setAttribute("aria-label", "Motion off: reduced motion preference");
+      motionButton.title = "Motion off: reduced motion preference";
+      motionButton.querySelector(".control-tip").textContent = motionButton.title;
+    }
   }
 
   function armAnimation() {
     clearTimers();
     introRunning = !reduced();
+    for (const f of flowEls) {
+      if (f.animation) f.animation.currentTime = f.motionPhase;
+    }
+    syncFlowMotion();
     const items = flowEls.slice().sort((a, b) => (b.amount ?? 0) - (a.amount ?? 0));
     const stateLayers = svg.selectAll(".fills,.border,.coast,.japan,.origins,.place,.inset-label,.state-dot").interrupt("intro");
     const labels = svg.select(".labels").interrupt("intro");
@@ -379,7 +425,8 @@
       }
     });
     applyFocus();
-    requestAnimationFrame(() => {
+    introFrame = requestAnimationFrame(() => {
+      introFrame = null;
       items.forEach((f, i) => {
         const delay = 360 + i / Math.max(1, items.length - 1) * 650;
         if (!f.quiet) {
@@ -397,7 +444,7 @@
           applyFocus();
         }, delay + 820));
       });
-      timers.push(setTimeout(() => { introRunning = false; }, 2100));
+      timers.push(setTimeout(() => { introRunning = false; syncFlowMotion(); }, 2100));
     });
   }
 
@@ -545,7 +592,14 @@
     frameBesidePanel();
   }
 
+  function resetPanelPreview() {
+    hoverCompany = null;
+    hoveredPanelRow = focusedPanelRow = null;
+    hoverCode = hoverFlow = null;
+  }
+
   function showPanel(view) {
+    resetPanelPreview();
     const wasHidden = panel.hidden;
     const changedView = panelView !== view;
     panelView = view;
@@ -598,6 +652,7 @@
   }
 
   function renderCompanyRows() {
+    resetPanelPreview();
     const rows = companies.filter((c) => c.search.includes(companySearch.trim().toLocaleLowerCase()))
       .sort((a, b) => {
         if (companySort === "amount" && (a.total == null) !== (b.total == null)) return a.total == null ? 1 : -1;
@@ -614,6 +669,7 @@
       '<span class="ranking-bar" aria-hidden="true"><i style="width:' + ((c.total || 0) / maxCompanyTotal * 100) +
       '%"></i></span></span></button></li>').join("");
     document.getElementById("company-empty").hidden = !!rows.length;
+    applyFocus();
   }
 
   function renderCompanies(focusTitle = true) {
@@ -738,7 +794,7 @@
     if (!LOGO_READY.has(slug)) {
       return '<span class="logo is-fallback" aria-hidden="true"><span class="mono">' + mono + "</span></span>";
     }
-    return '<span class="logo" data-logo="' + slug + '" aria-hidden="true"><img src="logos/' + slug + '.png?v=20261105d" width="88" height="60" alt="" onerror="this.parentNode.classList.add(\'is-fallback\')"><span class="mono">' + mono + "</span></span>";
+    return '<span class="logo" data-logo="' + slug + '" aria-hidden="true"><img src="logos/' + slug + '.png?v=20261105e" width="88" height="60" alt="" onerror="this.parentNode.classList.add(\'is-fallback\')"><span class="mono">' + mono + "</span></span>";
   }
 
   function projectsForCompany(name) {
@@ -768,7 +824,7 @@
           '<li class="chip' + (c.strong ? " strong" : "") + '">' + esc(c.text) + "</li>"
         ).join("");
         return (
-          '<article class="record">' +
+          '<article class="record" data-preview-state="' + esc(p.state) + '">' +
           '<div class="record-top"><h3><button type="button" class="state-link" data-company-state="' + esc(p.state) + '">' + esc(state ? state.name : p.state) + "</button></h3>" +
           '<p class="amt">' + esc(p.amount == null ? "Undisclosed" : formatLong(p.amount)) + "</p></div>" +
           '<p class="project">' + esc(p.project) + "</p>" +
@@ -828,6 +884,7 @@
     applyFocus();
   }
   function closePanel() {
+    resetPanelPreview();
     selectedCompany = hoverCode = hoverFlow = null;
     selectedCode = null;
     selectedFlow = null;
@@ -920,6 +977,7 @@
     const previous = animateRefit && !reduced() ? new Map(mapGeometry()) : null;
     renderedFrame = frameKey();
     clearTimers();
+    for (const f of flowEls) f.animation?.cancel();
     const box = layout(w, h);
     const usTopo = window.US_ATLAS;
     const matched = stateFeatures;
@@ -1114,7 +1172,8 @@
 
     const flows = svg.append("g").attr("class", "flows").attr("aria-hidden", "true");
     const flowColor = theme() === "light" ? "var(--flow)" : "var(--flow)";
-    for (const d of flowData) {
+    let movingMarks = 0;
+    for (const [index, d] of flowData.entries()) {
       const shape = curve(d.origin, d.xy, d.fan, d.state === "AK" || d.state === "HI");
       const g = flows.append("g").attr("data-flow", d.id).attr("data-state", d.state);
       g.append("path")
@@ -1167,7 +1226,24 @@
           .attr("fill", flowColor)
           .node();
       }
+      let motion, animation, motionPhase;
+      if (!d.quiet && movingMarks < MOTION_LIMIT) {
+        movingMarks++;
+        const length = path.getTotalLength();
+        motion = g.append("path").attr("class", "flow-motion")
+          .attr("d", shape.d).attr("stroke", flowColor)
+          .attr("stroke-dasharray", "1.8 " + Math.max(0, length - 1.8))
+          .style("visibility", "hidden").node();
+        const duration = 5400 + (index * 431 % 1500);
+        animation = motion.animate([
+          { strokeDashoffset: "0px" }, { strokeDashoffset: -length + "px" },
+        ], { duration, iterations: Infinity, easing: "linear" });
+        animation.pause();
+        motionPhase = (index * 0.61803398875 % 1) * duration;
+        animation.currentTime = motionPhase;
+      }
       flowEls.push({
+        motion, animation, motionPhase,
         id: d.id,
         state: d.state,
         firmGroup: d.firmGroup,
@@ -1512,6 +1588,12 @@
     introStarted = true;
     armAnimation();
   });
+  motionButton.addEventListener("click", () => {
+    motionPaused = !motionPaused;
+    try { localStorage.setItem("ji-flow-motion-paused", String(motionPaused)); } catch (e) {}
+    syncFlowMotion();
+  });
+  document.addEventListener("visibilitychange", syncFlowMotion);
   function openHash() {
     let hash;
     try { hash = decodeURIComponent(location.hash.slice(1)); } catch { return; }
@@ -1532,25 +1614,42 @@
     companySearch = event.target.value;
     renderCompanyRows();
   });
-  // Reuse map focus styling while keeping keyboard focus inside the ranking.
-  function highlightRankingRow(event) {
-    const row = event.target.closest("[data-ranking-state]");
-    if (!row || panelView !== "ranking") return;
-    hoverCode = row.getAttribute("data-ranking-state");
+  // Delegate all panel previews to the existing map focus path. Pointer previews
+  // are mouse-only; keyboard focus still works on devices with a touch screen.
+  const previewRowSelector = "[data-ranking-state],.company-row[data-company],[data-preview-state]";
+  function previewPanelRow() {
+    const row = hoveredPanelRow?.isConnected ? hoveredPanelRow :
+      focusedPanelRow?.isConnected ? focusedPanelRow : null;
+    hoverCompany = row?.dataset.company || null;
+    hoverCode = row?.dataset.rankingState || row?.dataset.previewState || null;
     hoverFlow = null;
     applyFocus();
   }
-  function clearRankingHighlight(event) {
-    const row = event.target.closest("[data-ranking-state]");
+  panel.addEventListener("pointerover", (event) => {
+    if (touchInput.matches || event.pointerType !== "mouse") return;
+    const row = event.target.closest(previewRowSelector);
     if (!row || row.contains(event.relatedTarget)) return;
-    const focused = event.type === "focusout" ? event.relatedTarget?.closest?.("[data-ranking-state]") : panel.querySelector("[data-ranking-state]:focus-within");
-    hoverCode = focused ? focused.getAttribute("data-ranking-state") : null;
-    applyFocus();
-  }
-  panel.addEventListener("pointerover", highlightRankingRow);
-  panel.addEventListener("focusin", highlightRankingRow);
-  panel.addEventListener("pointerout", clearRankingHighlight);
-  panel.addEventListener("focusout", clearRankingHighlight);
+    hoveredPanelRow = row;
+    previewPanelRow();
+  });
+  panel.addEventListener("pointerout", (event) => {
+    if (touchInput.matches || event.pointerType !== "mouse") return;
+    const row = event.target.closest(previewRowSelector);
+    if (!row || row.contains(event.relatedTarget)) return;
+    hoveredPanelRow = event.relatedTarget?.closest?.(previewRowSelector) || null;
+    previewPanelRow();
+  });
+  panel.addEventListener("focusin", (event) => {
+    // A tap focuses a button too; reserve previews for visible keyboard focus.
+    const row = event.target.closest(previewRowSelector);
+    focusedPanelRow = row && event.target.matches(":focus-visible") ? row : null;
+    if (focusedPanelRow) hoveredPanelRow = null;
+    previewPanelRow();
+  });
+  panel.addEventListener("focusout", (event) => {
+    focusedPanelRow = null;
+    previewPanelRow();
+  });
   let suppressHandleClick = false;
   panel.addEventListener("pointerdown", (event) => {
     if (!event.target.closest(".grabber") || window.innerWidth > 860) return;
@@ -1655,6 +1754,7 @@
   panelObserver.observe(panel);
   reducedMotion.addEventListener("change", () => {
     if (reduced()) { svg.selectAll("*").interrupt("frame"); draw(); armAnimation(); }
+    syncFlowMotion();
   });
   window.addEventListener("resize", () => {
     if (!panel.hidden && window.innerWidth <= 860) setSheetHeight(window.innerHeight * sheetFraction);

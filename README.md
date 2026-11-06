@@ -36,6 +36,8 @@ node scripts/build.mjs
 
 - **States** opens the state ranking. **Companies** opens a searchable, sortable company list; select a company for its total, state records and Pacific links. Clear the “Showing” chip or press Escape to return to all companies. Company selections can be shared with `#company=toyota`.
 
+- Hover a company row with a mouse or focus it with the keyboard to preview its states and links; leaving restores the selected company or the normal view. State records within a company also preview on hover or keyboard focus. Taps select without preview.
+- Moving dots show investment direction along documented-amount arcs, not traced transfers. Use **Pause motion / Play motion** beside Replay to stop or resume them; the choice is remembered. Motion pauses in hidden tabs and Heat map mode and respects reduced motion.
 - **Both** is the default. **Heat map** and **Flows** turn one layer off.
 - Click or focus a state for its total and records. Click a flow for that record.
 - Arrow keys move between states. Enter opens the record list. Escape closes it.

@@ -215,7 +215,7 @@ h1 {
 .tools button:hover { color: var(--ink); }
 .tools button[aria-checked="true"]:hover, .tools button[aria-expanded="true"]:hover { color: var(--bg); }
 .icon svg { width: 18px; height: 18px; }
-#replay { position: relative; }
+#replay, #flow-motion { position: relative; }
 .control-tip {
   display: none;
   position: absolute;
@@ -231,7 +231,8 @@ h1 {
   font-size: 12px;
   pointer-events: none;
 }
-#replay:hover .control-tip, #replay:focus-visible .control-tip { display: block; }
+#replay:hover .control-tip, #replay:focus-visible .control-tip,
+#flow-motion:hover .control-tip, #flow-motion:focus-visible .control-tip { display: block; }
 .icon-sun { display: none; }
 [data-theme="light"] .icon-moon { display: none; }
 [data-theme="light"] .icon-sun { display: block; }
@@ -838,4 +839,19 @@ input:focus-visible { outline: 2px solid var(--control-focus); outline-offset: 2
   .panel-head:has(.company-lockup) .text-btn { padding: 4px 10px; font-size: 12px; margin: 0 0 4px; }
   .panel-head:has(.company-lockup) .kicker { margin: 0 0 4px; font-size: 11px; }
   .company-lockup .logo { width: 64px; height: 44px; }
+}
+
+/* Direction cues share arc colors and leave the heat map in the foreground. */
+.flow-motion { fill: none; stroke-width: 2.8px; stroke-linecap: round; pointer-events: none; }
+#flow-motion .motion-play,
+#flow-motion[aria-pressed="true"] .motion-pause { display: none; }
+#flow-motion[aria-pressed="true"] .motion-play { display: block; }
+#flow-motion:disabled { opacity: 0.45; cursor: default; }
+.motion-note { margin: 2px 0 0; font-size: 11px; line-height: 1.35; }
+@media (max-width: 599px) {
+  .flow-key { flex-wrap: wrap; }
+  .motion-note { flex-basis: 100%; margin: 0; font-size: 9px; }
+  .tools { gap: 2px; }
+  .ranking-toggle { padding-inline: 6px; }
+  .tools .icon { width: 28px; }
 }

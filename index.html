@@ -20,7 +20,7 @@
   <meta name="twitter:image" content="https://edg-r.github.io/japan-us-investment-map/share.png">
   <meta name="twitter:image:alt" content="Map of documented Japanese investment by U.S. state, with North Carolina leading the recorded totals.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230c0e13'/%3E%3Cpath d='M6 22c6-12 14-12 20-2' fill='none' stroke='%23e6c98a' stroke-width='2'/%3E%3C/svg%3E">
-  <link rel="stylesheet" href="css/styles.css?v=20261105d">
+  <link rel="stylesheet" href="css/styles.css?v=20261105e">
   <script>
     (function () {
       try { localStorage.removeItem("ji-theme-v3"); } catch (e) {}
@@ -57,6 +57,11 @@
       <button type="button" class="icon" id="theme" aria-label="Switch to light theme">
         <svg viewBox="0 0 24 24" aria-hidden="true" class="icon-moon"><path d="M14.5 3.2a8.2 8.2 0 1 0 6.3 12.8A7.2 7.2 0 0 1 14.5 3.2Z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
         <svg viewBox="0 0 24 24" aria-hidden="true" class="icon-sun"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 3.5v2.2M12 18.3v2.2M3.5 12h2.2M18.3 12h2.2M6 6l1.6 1.6M16.4 16.4 18 18M18 6l-1.6 1.6M7.6 16.4 6 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </button>
+      <button type="button" class="icon" id="flow-motion" aria-label="Pause motion" aria-pressed="false" title="Pause motion">
+        <svg viewBox="0 0 24 24" aria-hidden="true" class="motion-pause"><path d="M9 6v12M15 6v12" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <svg viewBox="0 0 24 24" aria-hidden="true" class="motion-play"><path d="m9 6 9 6-9 6Z" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        <span class="control-tip" aria-hidden="true">Pause motion</span>
       </button>
       <button type="button" class="icon" id="replay" aria-label="Replay flow animation" title="Replay flows">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M19.6 4.8v4.2h-4.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -96,6 +101,7 @@
       <p>State color is the documented subtotal for 2014–29 Oct 2026. Larger amounts are darker green in the light theme and brighter green in the dark theme. A hatched state has a record and no total. That blank is not zero.</p>
       <p><span id="methods-total">The $41.04 billion</span> sums sourced, state-specific project commitments, completed project totals and acquisition prices. It is not foreign direct investment (FDI) stock, an annual investment flow, or a verified transfer from Japan. Announced scope does not establish how much was spent. Unallocated deals and presence-only records are excluded from the subtotal.</p>
       <p>Sources include company releases and reports, state and local government announcements, regulatory filings and public records. Each record links to its source. Full project scopes are counted once; missing state amounts remain blank. This is a documented ledger, not a complete census of Japanese investment. Click a company to see its other U.S. states.</p>
+      <p>Flow arcs are corporate links between a Japanese parent office and a U.S. project, headquarters or state reference. Moving dots show direction of investment, not traced bank transfers.</p>
       <p class="credits">Map: U.S. Census / Natural Earth state shapes via <a href="https://github.com/topojson/us-atlas">us-atlas</a>; Natural Earth Japan outline via <a href="https://github.com/topojson/world-atlas">world-atlas</a>; drawn with <a href="https://d3js.org/">D3</a>. Fonts: <a href="https://rsms.me/inter/">Inter</a> and <a href="https://github.com/productiontype/Newsreader">Newsreader</a>, under the SIL Open Font License.</p>
       </section>
       <section class="download-section" id="downloads" role="tabpanel" aria-labelledby="downloads-tab" hidden>
@@ -124,11 +130,11 @@
     <p class="noscript">This map needs JavaScript. The documented subtotal is $41.04 billion across 41 states. Ten states have records without a state total.</p>
   </noscript>
 
-  <script src="vendor/d3.min.js?v=20261105d"></script>
-  <script src="vendor/topojson-client.min.js?v=20261105d"></script>
-  <script src="js/atlas.js?v=20261105d"></script>
-  <script src="js/data.js?v=20261105d"></script>
-  <script src="js/app.js?v=20261105d"></script>
-  <script src="js/downloads.js?v=20261105d"></script>
+  <script src="vendor/d3.min.js?v=20261105e"></script>
+  <script src="vendor/topojson-client.min.js?v=20261105e"></script>
+  <script src="js/atlas.js?v=20261105e"></script>
+  <script src="js/data.js?v=20261105e"></script>
+  <script src="js/app.js?v=20261105e"></script>
+  <script src="js/downloads.js?v=20261105e"></script>
 </body>
 </html>
