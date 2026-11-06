@@ -794,7 +794,7 @@
     if (!LOGO_READY.has(slug)) {
       return '<span class="logo is-fallback" aria-hidden="true"><span class="mono">' + mono + "</span></span>";
     }
-    return '<span class="logo" data-logo="' + slug + '" aria-hidden="true"><img src="logos/' + slug + '.png?v=20261105e" width="88" height="60" alt="" onerror="this.parentNode.classList.add(\'is-fallback\')"><span class="mono">' + mono + "</span></span>";
+    return '<span class="logo" data-logo="' + slug + '" aria-hidden="true"><img src="logos/' + slug + '.png?v=20261106a'is-fallback\')"><span class="mono">' + mono + "</span></span>";
   }
 
   function projectsForCompany(name) {

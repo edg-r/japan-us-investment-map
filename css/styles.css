@@ -264,8 +264,8 @@ main { position: relative; min-height: 0; }
   line-height: 1.25;
 }
 .company-btn .logo, .company-lockup .logo {
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   flex: none;
   display: grid;
   grid-template: minmax(0, 1fr) / minmax(0, 1fr);
@@ -283,7 +283,7 @@ main { position: relative; min-height: 0; }
   width: 100%;
   height: 100%;
   object-fit: contain;
-  padding: 4px 5px;
+  padding: 2px 5px;
 }
 .logo .mono { display: none; }
 .logo.is-fallback {
@@ -801,7 +801,7 @@ input:focus-visible { outline: 2px solid var(--control-focus); outline-offset: 2
 .company-list { list-style: none; margin: 0; padding: 0; }
 .company-row { display: flex; align-items: center; gap: 12px; width: 100%; padding: 13px 2px; border: 0; border-bottom: 1px solid var(--line); background: transparent; text-align: left; }
 .company-row:hover, .company-row:focus-visible { background: var(--wash); }
-.company-row .logo { width: 72px; height: 52px; }
+.company-row .logo { width: 80px; height: 56px; }
 .company-row-body { display: block; flex: 1; min-width: 0; }
 .company-row-name { display: block; font-weight: 600; font-size: 14px; }
 .company-row-metrics { display: flex; justify-content: space-between; gap: 8px; margin-top: 3px; color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
@@ -833,12 +833,12 @@ input:focus-visible { outline: 2px solid var(--control-focus); outline-offset: 2
   .company-sort button { padding: 3px 6px; }
   #company-count { margin-top: 4px; }
   .company-row { padding: 10px 2px; gap: 10px; }
-  .company-row .logo { width: 64px; height: 46px; }
+  .company-row .logo { width: 72px; height: 50px; }
   .company-row-name { font-size: 13px; }
   .company-row-metrics { font-size: 11px; }
   .panel-head:has(.company-lockup) .text-btn { padding: 4px 10px; font-size: 12px; margin: 0 0 4px; }
   .panel-head:has(.company-lockup) .kicker { margin: 0 0 4px; font-size: 11px; }
-  .company-lockup .logo { width: 76px; height: 52px; }
+  .company-lockup .logo { width: 88px; height: 60px; }
 }
 
 /* Direction cues share arc colors and leave the heat map in the foreground. */
