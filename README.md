@@ -56,3 +56,7 @@ The script uses `js/data.js` as the numerical source of truth, checks exact IDs 
 ## Credits
 
 State shapes are the U.S. Census / Natural Earth composite from [us-atlas](https://github.com/topojson/us-atlas) (`states-10m`). The Japan outline is a simplified extract of Natural Earth via [world-atlas](https://github.com/topojson/world-atlas). The map is drawn with [D3](https://d3js.org/). Type is [Inter](https://rsms.me/inter/) and [Newsreader](https://github.com/productiontype/Newsreader), both under the SIL Open Font License.
+
+## Deploying changes
+
+GitHub Pages lets browsers cache CSS and JavaScript for 10 minutes. After editing `css/` or `js/`, bump the `?v=` value on those links in `index.html` so visitors never get new HTML with old styles.
