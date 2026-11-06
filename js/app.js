@@ -55,6 +55,19 @@
     list.sort((a, b) => (b.amount ?? -1) - (a.amount ?? -1) || a.firm.localeCompare(b.firm));
   }
 
+  // Use the same grouping as the map focus, including joint ventures once.
+  const companies = [...d3.group(data.projects, (p) => p.firmGroup || p.firm)]
+    .map(([name, records]) => {
+      const allocated = records.filter((p) => p.allocated && p.amount != null);
+      return { name, slug: logoSlug(name), records,
+        total: allocated.length ? d3.sum(allocated, (p) => p.amount) : null,
+        states: new Set(records.map((p) => p.state)),
+        search: [name, ...records.flatMap((p) => [p.firm, p.parent])].join(" ").toLocaleLowerCase() };
+    });
+  const companyByName = new Map(companies.map((c) => [c.name, c]));
+  const companyBySlug = new Map(companies.map((c) => [c.slug, c]));
+  const maxCompanyTotal = d3.max(companies, (c) => c.total) || 1;
+
   const totals = data.states.map((s) => s.total).filter((v) => v != null);
   const MIN = d3.min(totals);
   const MAX = d3.max(totals);
@@ -69,7 +82,6 @@
   let selectedCode = null;
   let selectedFlow = null;
   let selectedCompany = null;
-  let returnState = null;
   let lastFocus = "NC";
   let introStarted = false;
   let introRunning = false;
@@ -85,6 +97,14 @@
   let fontsReady = false;
   let booted = false;
   let panelView = "details";
+  let companySort = "amount";
+  let companyAscending = false;
+  let companySearch = "";
+  let lastCompany = null;
+  let panelOpener = null;
+  const companiesButton = document.getElementById("companies-open");
+  const companyChip = document.getElementById("company-focus");
+  const selectionStatus = document.getElementById("selection-status");
   let rankingSort = "amount";
   let rankingAscending = false;
   let sheetHeight = null;
@@ -196,7 +216,7 @@
       const top = Math.max(168, Math.min(180, available * 0.3));
       return {
         mobile,
-        japan: [18, 20, w - 18, top - 50],
+        japan: [18, selectedCompany ? 50 : 20, w - 18, selectedCompany ? top - 8 : top - 50],
         lower: [8, top, w - 8, Math.max(top + 100, available - (panel.hidden ? legendH : 12))],
       };
     }
@@ -260,14 +280,12 @@
 
   function companyStates() {
     if (!selectedCompany) return null;
-    return new Set(
-      data.projects
-        .filter((p) => (p.firmGroup || p.firm) === selectedCompany)
-        .map((p) => p.state)
-    );
+    return companyByName.get(selectedCompany).states;
   }
 
   function applyFocus() {
+    companyChip.hidden = !selectedCompany;
+    document.getElementById("company-focus-label").textContent = selectedCompany ? "Showing: " + selectedCompany : "";
     const states = companyStates();
     const code = states ? null : activeCode();
     const flowId = states ? null : (hoverFlow || selectedFlow);
@@ -518,6 +536,7 @@
     sheetFraction = sheetHeight / window.innerHeight;
     panel.style.setProperty("--sheet-height", sheetHeight + "px");
     const expanded = sheetHeight > window.innerHeight * 0.65;
+    document.body.classList.toggle("company-sheet-expanded", expanded);
     const handle = panel.querySelector(".grabber");
     if (handle) {
       handle.setAttribute("aria-expanded", String(expanded));
@@ -531,6 +550,7 @@
     const changedView = panelView !== view;
     panelView = view;
     rankingButton.setAttribute("aria-expanded", String(view === "ranking"));
+    companiesButton.setAttribute("aria-expanded", String(view === "companies" || view === "company"));
     document.body.classList.add("has-panel");
     panel.hidden = false;
     if (wasHidden || changedView) sheetHeight = null;
@@ -568,13 +588,78 @@
 
   function openRanking() {
     if (!panel.hidden && panelView === "ranking") { closePanel(); return; }
-    const reframed = !!selectedCompany;
-    selectedCode = selectedFlow = selectedCompany = returnState = null;
+    panelOpener = rankingButton;
+    selectedCode = selectedFlow = selectedCompany = hoverCode = hoverFlow = null;
     hideTip();
     history.replaceState(null, "", location.pathname + location.search);
     renderRanking();
-    if (reframed) draw();
-    else applyFocus();
+    frameBesidePanel();
+    applyFocus();
+  }
+
+  function renderCompanyRows() {
+    const rows = companies.filter((c) => c.search.includes(companySearch.trim().toLocaleLowerCase()))
+      .sort((a, b) => {
+        if (companySort === "amount" && (a.total == null) !== (b.total == null)) return a.total == null ? 1 : -1;
+        const diff = companySort === "name" ? a.name.localeCompare(b.name) :
+          companySort === "states" ? a.states.size - b.states.size : (a.total || 0) - (b.total || 0);
+        return (companyAscending ? diff : -diff) || a.name.localeCompare(b.name);
+      });
+    document.getElementById("company-count").textContent = rows.length + " of " + companies.length + " companies";
+    document.getElementById("company-list").innerHTML = rows.map((c) =>
+      '<li><button type="button" class="company-row" data-company="' + esc(c.name) + '">' + logoMark(c.name) +
+      '<span class="company-row-body"><span class="company-row-name">' + esc(c.name) + '</span>' +
+      '<span class="company-row-metrics"><span>' + esc(formatLong(c.total)) + '</span><span>' + c.states.size +
+      (c.states.size === 1 ? ' state' : ' states') + '</span></span>' +
+      '<span class="ranking-bar" aria-hidden="true"><i style="width:' + ((c.total || 0) / maxCompanyTotal * 100) +
+      '%"></i></span></span></button></li>').join("");
+    document.getElementById("company-empty").hidden = !!rows.length;
+  }
+
+  function renderCompanies(focusTitle = true) {
+    const sortButton = (key, label) => '<button type="button" data-company-sort="' + key +
+      '" aria-pressed="' + (companySort === key) + '" aria-label="Sort by ' + label.toLowerCase() +
+      (companySort === key ? (companyAscending ? ', ascending' : ', descending') : '') + '">' + label +
+      (companySort === key ? (companyAscending ? ' ↑' : ' ↓') : '') + '</button>';
+    panel.innerHTML = sheetHandle() + '<div class="panel-head">' +
+      '<button type="button" class="panel-close" data-close aria-label="Close companies">×</button>' +
+      '<h2 id="panel-title" tabindex="-1">Companies</h2>' +
+      '<p class="quiet">Select a company to see its U.S. investments.</p></div>' +
+      '<div class="company-controls"><label for="company-search">Search companies or Japanese parents</label>' +
+      '<input type="search" id="company-search" autocomplete="off" placeholder="Company or parent name" value="' + esc(companySearch) + '">' +
+      '<div class="company-sort" role="group" aria-label="Sort companies">' + sortButton("amount", "Total") +
+      sortButton("name", "Name") + sortButton("states", "States") + '</div>' +
+      '<p id="company-count" class="quiet" role="status" aria-live="polite"></p></div>' +
+      '<div class="panel-scroll"><ul id="company-list" class="company-list" aria-label="Companies"></ul>' +
+      '<p id="company-empty" class="quiet" hidden>No matching companies. Try another name.</p></div>';
+    renderCompanyRows();
+    showPanel("companies");
+    if (focusTitle) document.getElementById("panel-title").focus({ preventScroll: true });
+  }
+
+  function openCompanies() {
+    if (!panel.hidden && (panelView === "companies" || panelView === "company")) { closePanel(); return; }
+    panelOpener = companiesButton;
+    selectedCompany = selectedCode = selectedFlow = hoverCode = hoverFlow = null;
+    hideTip();
+    history.replaceState(null, "", location.pathname + location.search);
+    renderCompanies();
+    frameBesidePanel();
+    applyFocus();
+  }
+
+  function clearCompany() {
+    if (!selectedCompany) return;
+    selectedCompany = selectedCode = selectedFlow = hoverCode = hoverFlow = null;
+    hideTip();
+    history.replaceState(null, "", location.pathname + location.search);
+    renderCompanies(false);
+    frameBesidePanel();
+    applyFocus();
+    selectionStatus.textContent = "Company focus cleared. Showing all investments.";
+    const row = [...panel.querySelectorAll("[data-company]")].find((el) => el.dataset.company === lastCompany);
+    (row || document.getElementById("company-search")).focus({ preventScroll: true });
+    row?.scrollIntoView({ block: "nearest" });
   }
 
   function renderPanel(focusTitle) {
@@ -653,30 +738,27 @@
     if (!LOGO_READY.has(slug)) {
       return '<span class="logo is-fallback" aria-hidden="true"><span class="mono">' + mono + "</span></span>";
     }
-    return '<span class="logo" data-logo="' + slug + '" aria-hidden="true"><img src="logos/' + slug + '.png?v=20261105c" width="88" height="60" alt="" onerror="this.parentNode.classList.add(\'is-fallback\')"><span class="mono">' + mono + "</span></span>";
+    return '<span class="logo" data-logo="' + slug + '" aria-hidden="true"><img src="logos/' + slug + '.png?v=20261105d" width="88" height="60" alt="" onerror="this.parentNode.classList.add(\'is-fallback\')"><span class="mono">' + mono + "</span></span>";
   }
 
   function projectsForCompany(name) {
-    return data.projects
-      .filter((p) => (p.firmGroup || p.firm) === name)
+    return (companyByName.get(name)?.records || [])
       .slice()
       .sort((a, b) => (b.amount ?? -1) - (a.amount ?? -1) || a.state.localeCompare(b.state));
   }
 
   function renderCompanyPanel(focusTitle) {
     const rows = projectsForCompany(selectedCompany);
-    const total = d3.sum(rows, (p) => p.amount || 0);
-    const states = new Set(rows.map((p) => p.state));
-    const back = returnState ? stateByCode.get(returnState) : null;
+    const { total, states } = companyByName.get(selectedCompany);
     panel.innerHTML =
       sheetHandle() +
       '<div class="panel-head">' +
       '<button type="button" class="panel-close" data-close aria-label="Close details">×</button>' +
-      (back ? '<button type="button" class="text-btn" data-back>Back to ' + esc(back.name) + "</button>" : "") +
+      '<button type="button" class="text-btn" data-company-back>← All companies</button>' +
       '<p class="kicker">Company</p>' +
       '<div class="company-lockup">' + logoMark(selectedCompany) +
       "<h2 id=\"panel-title\" tabindex=\"-1\">" + esc(selectedCompany) + "</h2></div>" +
-      '<p class="big">' + esc(total > 0 ? formatLong(total) : "Undisclosed") + "</p>" +
+      '<p class="big">' + esc(formatLong(total)) + "</p>" +
       '<p class="quiet">' + states.size + (states.size === 1 ? " state" : " states") + " · " + rows.length + (rows.length === 1 ? " record" : " records") + "</p>" +
       "</div>" +
       '<div class="panel-scroll">' +
@@ -687,16 +769,17 @@
         ).join("");
         return (
           '<article class="record">' +
-          '<div class="record-top"><h3>' + esc(state ? state.name : p.state) + "</h3>" +
+          '<div class="record-top"><h3><button type="button" class="state-link" data-company-state="' + esc(p.state) + '">' + esc(state ? state.name : p.state) + "</button></h3>" +
           '<p class="amt">' + esc(p.amount == null ? "Undisclosed" : formatLong(p.amount)) + "</p></div>" +
           '<p class="project">' + esc(p.project) + "</p>" +
+          '<p class="parent">Status: ' + esc(STATUS[p.status] || p.status || "Status unresolved") + '</p>' +
           '<ul class="chips">' + chipHtml + "</ul>" +
           '<a class="source" href="' + esc(p.sourceUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(p.sourceTitle) + "</a>" +
           "</article>"
         );
       }).join("") +
       "</div>";
-    showPanel("details");
+    showPanel("company");
     if (focusTitle) {
       const title = document.getElementById("panel-title");
       if (title) title.focus({ preventScroll: true });
@@ -704,71 +787,89 @@
   }
 
   function openCompany(name, focusTitle) {
-    if (!projectsForCompany(name).length) return;
-    if (!selectedCompany) returnState = selectedCode;
-    selectedCompany = name;
-    selectedFlow = null;
+    const company = companyByName.get(name);
+    if (!company) return;
+    if (panel.hidden) panelOpener = companiesButton;
+    selectedCompany = lastCompany = name;
+    selectedCode = selectedFlow = hoverCode = hoverFlow = null;
     hideTip();
     renderCompanyPanel(focusTitle !== false);
-    history.replaceState(null, "", "#co-" + encodeURIComponent(name));
-    draw();
+    history.replaceState(null, "", "#company=" + encodeURIComponent(company.slug));
+    selectionStatus.textContent = "Showing: " + name + ", " + formatLong(company.total) + ", " + company.states.size +
+      (company.states.size === 1 ? " state." : " states.");
+    frameBesidePanel();
+    applyFocus();
   }
 
   function openState(code, focusTitle) {
-    const reframed = !!selectedCompany;
-    selectedCompany = null;
+    if (panel.hidden) panelOpener = null;
+    selectedCompany = hoverCode = hoverFlow = null;
     selectedCode = code;
     selectedFlow = null;
     lastFocus = code;
     hideTip();
     renderPanel(focusTitle !== false);
     history.replaceState(null, "", "#" + code);
-    if (reframed) draw();
-    else applyFocus();
+    frameBesidePanel();
+    applyFocus();
   }
   function openRecord(id, focusTitle) {
     const p = projectById.get(id);
     if (!p) return;
-    const reframed = !!selectedCompany;
-    selectedCompany = null;
+    if (panel.hidden) panelOpener = null;
+    selectedCompany = hoverCode = hoverFlow = null;
     selectedCode = p.state;
     selectedFlow = id;
     lastFocus = p.state;
     hideTip();
     renderPanel(focusTitle !== false);
     history.replaceState(null, "", "#" + encodeURIComponent(id));
-    if (reframed) draw();
-    else applyFocus();
+    frameBesidePanel();
+    applyFocus();
   }
   function closePanel() {
-    const wasRanking = panelView === "ranking";
-    const reframed = !!selectedCompany;
-    selectedCompany = null;
-    returnState = null;
+    selectedCompany = hoverCode = hoverFlow = null;
     selectedCode = null;
     selectedFlow = null;
     panel.classList.remove("is-in");
     panel.hidden = true;
     document.body.classList.remove("has-panel");
     rankingButton.setAttribute("aria-expanded", "false");
-    frameBesidePanel();
+    companiesButton.setAttribute("aria-expanded", "false");
     history.replaceState(null, "", location.pathname + location.search);
-    if (reframed) draw();
-    else applyFocus();
+    frameBesidePanel();
+    applyFocus();
     const hit = hits.get(lastFocus);
-    if (wasRanking) rankingButton.focus({ preventScroll: true });
+    if (panelOpener) panelOpener.focus({ preventScroll: true });
     else if (hit) {
       for (const [c, node] of hits) node.setAttribute("tabindex", c === lastFocus ? "0" : "-1");
       hit.focus({ preventScroll: true });
     }
+    hoverCode = hoverFlow = null;
+    applyFocus();
+    hideTip();
+    selectionStatus.textContent = "Showing all investments.";
   }
 
   function curve(a, b, fan, inset) {
     const dx = b[0] - a[0];
     const dy = b[1] - a[1];
     const dist = Math.hypot(dx, dy) || 1;
+    // Mobile stacks Japan above the U.S., so a plain downward bow reads best.
+    if (!inset && stage.clientWidth <= 860) {
+      const side = 24 + fan * 22;
+      const m1 = [a[0] + dx * 0.2 + side, a[1] + dy * 0.45];
+      const m2 = [b[0] + side * 0.6, b[1] - dy * 0.35];
+      return {
+        c: m2,
+        d: "M" + a[0].toFixed(1) + "," + a[1].toFixed(1) +
+          " C" + m1[0].toFixed(1) + "," + m1[1].toFixed(1) +
+          " " + m2[0].toFixed(1) + "," + m2[1].toFixed(1) +
+          " " + b[0].toFixed(1) + "," + b[1].toFixed(1),
+      };
+    }
     // Leave the Japan inset to the right before turning toward the western insets.
-    if (inset || stage.clientWidth <= 860) {
+    if (inset) {
       const bend = Math.min(80, dist * 0.25);
       const outer = stage.clientWidth <= 860 ? stage.clientWidth - 24 : Math.max(318, a[0] + 135);
       const turn = [outer, a[1] + 90];
@@ -1335,10 +1436,7 @@
 
     if (!booted) {
       booted = true;
-      const hash = decodeURIComponent(location.hash.replace(/^#/, ""));
-      if (hash.startsWith("co-")) openCompany(decodeURIComponent(hash.slice(3)), false);
-      else if (hash && projectById.has(hash)) openRecord(hash, false);
-      else if (hash && stateByCode.has(hash)) openState(hash, false);
+      openHash();
     } else if (selectedCode) {
       applyFocus();
     }
@@ -1414,7 +1512,26 @@
     introStarted = true;
     armAnimation();
   });
+  function openHash() {
+    let hash;
+    try { hash = decodeURIComponent(location.hash.slice(1)); } catch { return; }
+    if (hash.startsWith("company=")) {
+      const company = companyBySlug.get(hash.slice(8));
+      if (company) openCompany(company.name, false);
+    } else if (hash.startsWith("co-")) openCompany(hash.slice(3), false);
+    else if (projectById.has(hash)) openRecord(hash, false);
+    else if (stateByCode.has(hash)) openState(hash, false);
+    else if (!hash && !panel.hidden) closePanel();
+  }
+  window.addEventListener("hashchange", openHash);
   rankingButton.addEventListener("click", openRanking);
+  companiesButton.addEventListener("click", openCompanies);
+  document.getElementById("company-clear").addEventListener("click", clearCompany);
+  panel.addEventListener("input", (event) => {
+    if (event.target.id !== "company-search") return;
+    companySearch = event.target.value;
+    renderCompanyRows();
+  });
   // Reuse map focus styling while keeping keyboard focus inside the ranking.
   function highlightRankingRow(event) {
     const row = event.target.closest("[data-ranking-state]");
@@ -1473,10 +1590,11 @@
       else setSheetHeight(window.innerHeight * (["ArrowUp", "End"].includes(event.key) ? 0.94 : 0.4));
       return;
     }
-    const row = event.target.closest("[data-select-state]");
+    const selector = panelView === "companies" ? "[data-company]" : panelView === "company" ? "[data-company-state]" : "[data-select-state]";
+    const row = event.target.closest(selector);
     if (!row || !["ArrowDown", "ArrowUp", "Home", "End"].includes(event.key)) return;
     event.preventDefault();
-    const buttons = [...panel.querySelectorAll("[data-select-state]")];
+    const buttons = [...panel.querySelectorAll(selector)];
     const index = buttons.indexOf(row);
     const next = event.key === "Home" ? 0 : event.key === "End" ? buttons.length - 1 :
       (index + (event.key === "ArrowDown" ? 1 : buttons.length - 1)) % buttons.length;
@@ -1488,6 +1606,18 @@
       suppressHandleClick = false;
       return;
     }
+    const companySortButton = event.target.closest("[data-company-sort]");
+    if (companySortButton) {
+      const key = companySortButton.dataset.companySort;
+      companyAscending = companySort === key ? !companyAscending : key === "name";
+      companySort = key;
+      renderCompanies(false);
+      panel.querySelector('[data-company-sort="' + key + '"]').focus({ preventScroll: true });
+      return;
+    }
+    if (event.target.closest("[data-company-back]")) { clearCompany(); return; }
+    const companyState = event.target.closest("[data-company-state]");
+    if (companyState) { openState(companyState.dataset.companyState); return; }
     const sort = event.target.closest("[data-sort]");
     if (sort) {
       const key = sort.getAttribute("data-sort");
@@ -1503,20 +1633,14 @@
       closePanel();
       return;
     }
-    if (event.target.closest("[data-back]")) {
-      const back = returnState;
-      selectedCompany = null;
-      if (back) openState(back);
-      else closePanel();
-      return;
-    }
     const company = event.target.closest("[data-company]");
     if (company) openCompany(company.getAttribute("data-company"));
   });
   document.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !panel.hidden && !document.querySelector("dialog[open]")) {
       event.preventDefault();
-      closePanel();
+      if (selectedCompany) clearCompany();
+      else closePanel();
     }
     if (event.key === "Escape") hideTip();
   });

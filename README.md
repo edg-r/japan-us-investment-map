@@ -34,6 +34,8 @@ node scripts/build.mjs
 
 ## Map controls
 
+- **States** opens the state ranking. **Companies** opens a searchable, sortable company list; select a company for its total, state records and Pacific links. Clear the “Showing” chip or press Escape to return to all companies. Company selections can be shared with `#company=toyota`.
+
 - **Both** is the default. **Heat map** and **Flows** turn one layer off.
 - Click or focus a state for its total and records. Click a flow for that record.
 - Arrow keys move between states. Enter opens the record list. Escape closes it.
