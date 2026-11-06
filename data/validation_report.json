@@ -1,0 +1,154 @@
+{
+  "as_of": "2026-10-29",
+  "record_count": 67,
+  "state_count": 51,
+  "record_total_usd_million": 41036.0,
+  "state_total_usd_million": 41036.0,
+  "quantified_states": 41,
+  "unquantified_states": 10,
+  "points_with_coordinates": 63,
+  "mismatches": [],
+  "geometry_repairs": [
+    {
+      "state_code": "DE",
+      "reason": "Too few points in geometry component[-75.5603153637536 39.630063805328]",
+      "method": "Shapely make_valid; retain polygon components only",
+      "area_change_square_degrees": -1.1102230246251565e-16
+    },
+    {
+      "state_code": "OR",
+      "reason": "Ring Self-intersection[-119.999364290343 41.9950551335413]",
+      "method": "Shapely make_valid; retain polygon components only",
+      "area_change_square_degrees": -1.4210854715202004e-14
+    }
+  ],
+  "text_cleanups": [
+    {
+      "id": "ak-unisea-dock-2015",
+      "field": "allocation_note",
+      "before": "Company says OVER $20m invested in2015. Numeric20 is a lower-bound display amount, not an exact project total. Exact date unknown. Coordinates approximate Unalaska city.",
+      "after": "Company says OVER $20m invested in 2015. Numeric 20 is a lower-bound display amount, not an exact project total. Exact date unknown. Coordinates approximate Unalaska city."
+    },
+    {
+      "id": "ak-unisea-dock-2015",
+      "field": "evidence_summary",
+      "before": "Company history dates reconstruction of G1 dock in Dutch Harbor to2015 and states investment exceeded $20m;2017 cod-plant modernization is a later distinct event with no disclosed cost.",
+      "after": "Company history dates reconstruction of G1 dock in Dutch Harbor to 2015 and states investment exceeded $20m;2017 cod-plant modernization is a later distinct event with no disclosed cost."
+    },
+    {
+      "id": "de-fujifilm-inkjet-2022",
+      "field": "allocation_note",
+      "before": "Specific second facility investment, not the $47m-plus cumulative two-facility total also cited in release. Construction began March2022, planned operation summer2023; completion not verified from this source.",
+      "after": "Specific second facility investment, not the $47m-plus cumulative two-facility total also cited in release. Construction began March 2022, planned operation summer 2023; completion not verified from this source."
+    },
+    {
+      "id": "de-fujifilm-inkjet-2022",
+      "field": "evidence_summary",
+      "before": "Company announces $28m New Castle facility adding11,000square feet of operational space and doubling U.S. pigment-dispersion capacity.",
+      "after": "Company announces $28m New Castle facility adding 11,000square feet of operational space and doubling U.S. pigment-dispersion capacity."
+    },
+    {
+      "id": "dc-mori-601mass-2022",
+      "field": "allocation_note",
+      "before": "Whole property gross sales price, not seller net proceeds or new construction spending. BXP SEC filing dates closing August30,2022. Mori buyer confirmation is on page4 at https://www.mori-trust.co.jp/assets/media/20230518.pdf . Announcement date is seller press-release date; underlying filing used for amount.",
+      "after": "Whole property gross sales price, not seller net proceeds or new construction spending. BXP SEC filing dates closing August 30,2022. Mori buyer confirmation is on page 4 at https://www.mori-trust.co.jp/assets/media/20230518.pdf . Announcement date is seller press-release date; underlying filing used for amount."
+    },
+    {
+      "id": "dc-mori-601mass-2022",
+      "field": "evidence_summary",
+      "before": "Seller filing reports $531m sale of601Massachusetts Avenue,Washington,D.C. onAugust30. Mori Trust results report identifies the same address as an August2022 acquisition through Mori America.",
+      "after": "Seller filing reports $531m sale of 601Massachusetts Avenue,Washington,D.C. on August 30. Mori Trust results report identifies the same address as an August 2022 acquisition through Mori America."
+    },
+    {
+      "id": "dc-mori-601mass-2022",
+      "field": "source_title",
+      "before": "Boston Properties Form 10-Q for quarter ended September30,2022",
+      "after": "Boston Properties Form 10-Q for quarter ended September 30,2022"
+    },
+    {
+      "id": "hi-mitsui-halepuna-2019",
+      "field": "allocation_note",
+      "before": "Described only as a multimillion-dollar transformation, so no exact value is assigned. Hotel opened October25,2019. Ownership confirmation: https://www.mitsuifudosan.co.jp/english/corporate/news/2018/1003_03/ .",
+      "after": "Described only as a multimillion-dollar transformation, so no exact value is assigned. Hotel opened October 25,2019. Ownership confirmation: https://www.mitsuifudosan.co.jp/english/corporate/news/2018/1003_03/ ."
+    },
+    {
+      "id": "hi-mitsui-halepuna-2019",
+      "field": "evidence_summary",
+      "before": "Tokyo-headquartered parent announced reopening after major transformation, with284 guest rooms and four suites.",
+      "after": "Tokyo-headquartered parent announced reopening after major transformation, with 284 guest rooms and four suites."
+    },
+    {
+      "id": "hi-resorttrust-kahala-2014",
+      "field": "allocation_note",
+      "before": "Completed-acquisition company release reports $290m on October14,2014. This supersedes the July31 conditional $300m announcement; do not sum the two prices. The announcement_date here is the completed-acquisition release date. Corporate profile also lists a Tokyo head office; Nagoya is the primary head office used for mapping.",
+      "after": "Completed-acquisition company release reports $290m on October 14,2014. This supersedes the July 31 conditional $300m announcement; do not sum the two prices. The announcement_date here is the completed-acquisition release date. Corporate profile also lists a Tokyo head office; Nagoya is the primary head office used for mapping."
+    },
+    {
+      "id": "hi-resorttrust-kahala-2014",
+      "field": "evidence_summary",
+      "before": "Company confirms acquisition of the Honolulu hotel for $290m on October14 and its operation by local subsidiary Resorttrust Hawaii.",
+      "after": "Company confirms acquisition of the Honolulu hotel for $290m on October 14 and its operation by local subsidiary Resorttrust Hawaii."
+    },
+    {
+      "id": "md-shimadzu-innovation-2015",
+      "field": "evidence_summary",
+      "before": "State announcement identifies Kyoto origin and $20m Columbia expansion for new-product R&D and engineering, expected to create25 jobs.",
+      "after": "State announcement identifies Kyoto origin and $20m Columbia expansion for new-product R&D and engineering, expected to create 25 jobs."
+    },
+    {
+      "id": "va-ntt-va3-2016",
+      "field": "allocation_note",
+      "before": "The $160m is VA3 phase-one facility investment, not the entire multi-building Ashburn campus. Opening March20,2018 confirmed at https://www.ntt.com/en/about-us/press-releases/news/article/2018/0320.html . Announced amount retained; no final outturn cost established.",
+      "after": "The $160m is VA3 phase-one facility investment, not the entire multi-building Ashburn campus. Opening March 20,2018 confirmed at https://www.ntt.com/en/about-us/press-releases/news/article/2018/0320.html . Announced amount retained; no final outturn cost established."
+    },
+    {
+      "id": "va-ntt-va3-2016",
+      "field": "evidence_summary",
+      "before": "Companies announced $160m for245,000-square-foot,16-megawatt VA3 phase of their Ashburn campus; subsequent company release confirms opening.",
+      "after": "Companies announced $160m for 245,000-square-foot,16-megawatt VA3 phase of their Ashburn campus; subsequent company release confirms opening."
+    },
+    {
+      "id": "wa-shreit-ivey-2024",
+      "field": "allocation_note",
+      "before": "Property acquisition from NASH\u2013Holland Boren & Lenora, an existing Sekisui House-associated venture. Transfer between a Japanese-sponsored developer and Japanese REIT, not evidence of net new Japanese FDI or new construction spending. Announced own-funds financing does not establish bank-level geographic funding source. Seller September5,2024 presentation p28 confirms May completion: https://www.sekisuihouse.co.jp/company/financial/library/ir_document/2024/2024_kessan/p20240905e.pdf .",
+      "after": "Property acquisition from NASH\u2013Holland Boren & Lenora, an existing Sekisui House-associated venture. Transfer between a Japanese-sponsored developer and Japanese REIT, not evidence of net new Japanese FDI or new construction spending. Announced own-funds financing does not establish bank-level geographic funding source. Seller September 5,2024 presentation p28 confirms May completion: https://www.sekisuihouse.co.jp/company/financial/library/ir_document/2024/2024_kessan/p20240905e.pdf ."
+    },
+    {
+      "id": "wa-shreit-ivey-2024",
+      "field": "evidence_summary",
+      "before": "Japanese investment corporation announced $328m residential-interest acquisition in Seattle through two U.S. entities. Seller later confirms transaction completion in May2024; acquisition is explicitly an interested-party transaction.",
+      "after": "Japanese investment corporation announced $328m residential-interest acquisition in Seattle through two U.S. entities. Seller later confirms transaction completion in May 2024; acquisition is explicitly an interested-party transaction."
+    },
+    {
+      "id": "wa-shreit-ivey-2024",
+      "field": "ownership_scope",
+      "before": "Japanese REIT invests through two U.S. limited liability companies acquiring the residential portions, floors5\u201344 and underground1\u20137, with89.51% allocated land interest. Not the entire mixed-use building.",
+      "after": "Japanese REIT invests through two U.S. limited liability companies acquiring the residential portions, floors 5\u201344 and underground 1\u20137, with 89.51% allocated land interest. Not the entire mixed-use building."
+    },
+    {
+      "id": "wv-toyota-hybrid-2025",
+      "field": "allocation_note",
+      "before": "Incremental announced investment, distinct from the company historical $2.8bn-plus plant total. Release plans production in second half2026; actual startup not verified. Buffalo location independently supported by https://pressroom.toyota.com/toyota-west-virginia-revs-up-production-for-electrified-future/ .",
+      "after": "Incremental announced investment, distinct from the company historical $2.8bn-plus plant total. Release plans production in second half 2026; actual startup not verified. Buffalo location independently supported by https://pressroom.toyota.com/toyota-west-virginia-revs-up-production-for-electrified-future/ ."
+    },
+    {
+      "id": "wv-toyota-hybrid-2025",
+      "field": "evidence_summary",
+      "before": "Japanese-language parent release announces $88m for new hybrid transaxle line, with production expected in late2026.",
+      "after": "Japanese-language parent release announces $88m for new hybrid transaxle line, with production expected in late 2026."
+    }
+  ],
+  "stata_118": true,
+  "geopackage": true,
+  "verified_readback": [
+    "CSV",
+    "Excel",
+    "Stata",
+    "GeoPackage states/projects EPSG:4326"
+  ],
+  "source_sha256": {
+    "js/data.js": "393164c05b9fbe19dc18b2414348b40627e030cbb5348dc4d4b36930615dd5b0",
+    "investment-ledger.csv": "9b81b6a93fa76c2a084433feb5c5efacbb6e628a8cc92d379ed2b670ee2a70ff",
+    "js/atlas.js": "8ccc97dd430b06e03aa00ab1c25cba20f232ea30b5f9c12bda7858bf054e84de"
+  }
+}
