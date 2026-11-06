@@ -5,6 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Japanese investment, by state</title>
   <meta name="description" content="Documented investment commitments and transactions involving Japanese firms, by U.S. state, 2014 through 29 October 2026. Not FDI stock.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Japanese investment, by state">
+  <meta property="og:description" content="One Toyota battery campus in North Carolina is about a third of the documented total. Explore state totals and sourced records, 2014–29 October 2026. Not FDI stock.">
+  <meta property="og:url" content="https://edg-r.github.io/japan-us-investment-map/">
+  <meta property="og:image" content="https://edg-r.github.io/japan-us-investment-map/share.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="Map of documented Japanese investment by U.S. state, with North Carolina leading the recorded totals.">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Japanese investment, by state">
+  <meta name="twitter:description" content="One Toyota battery campus in North Carolina is about a third of the documented total. Explore state totals and sourced records. Not FDI stock.">
+  <meta name="twitter:url" content="https://edg-r.github.io/japan-us-investment-map/">
+  <meta name="twitter:image" content="https://edg-r.github.io/japan-us-investment-map/share.png">
+  <meta name="twitter:image:alt" content="Map of documented Japanese investment by U.S. state, with North Carolina leading the recorded totals.">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%230c0e13'/%3E%3Cpath d='M6 22c6-12 14-12 20-2' fill='none' stroke='%23e6c98a' stroke-width='2'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="css/styles.css">
   <script>
@@ -25,13 +39,15 @@
   <header>
     <div class="brand">
       <h1>Japanese investment, by state</h1>
-      <p class="sub">Documented commitments and transactions, 2014–29 Oct 2026. Not FDI stock.</p>
+      <p class="headline" id="headline"></p>
+      <p class="sub"><span class="sub-detail">Documented commitments and transactions, </span>2014–29 Oct 2026. Not FDI stock.</p>
     </div>
     <button type="button" class="stat" id="about-open" aria-haspopup="dialog" aria-controls="notes">
-      <span class="stat-value" id="stat-value">$41.036 billion</span>
+      <span class="stat-value" id="stat-value">$41.04 billion</span>
       <span class="stat-label">documented subtotal</span>
     </button>
     <div class="tools">
+      <button type="button" class="ranking-toggle" id="ranking-open" aria-controls="panel" aria-expanded="false">Ranking</button>
       <div class="seg" role="radiogroup" aria-label="Map layers">
         <button type="button" role="radio" data-mode="heat" aria-checked="false">Heat map</button>
         <button type="button" role="radio" data-mode="flows" aria-checked="false">Flows</button>
@@ -41,8 +57,9 @@
         <svg viewBox="0 0 24 24" aria-hidden="true" class="icon-moon"><path d="M14.5 3.2a8.2 8.2 0 1 0 6.3 12.8A7.2 7.2 0 0 1 14.5 3.2Z" fill="none" stroke="currentColor" stroke-width="1.6"/></svg>
         <svg viewBox="0 0 24 24" aria-hidden="true" class="icon-sun"><circle cx="12" cy="12" r="3.2" fill="none" stroke="currentColor" stroke-width="1.6"/><path d="M12 3.5v2.2M12 18.3v2.2M3.5 12h2.2M18.3 12h2.2M6 6l1.6 1.6M16.4 16.4 18 18M18 6l-1.6 1.6M7.6 16.4 6 18" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
       </button>
-      <button type="button" class="icon" id="replay" aria-label="Replay flow animation">
+      <button type="button" class="icon" id="replay" aria-label="Replay flow animation" title="Replay flows">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19.5 12a7.5 7.5 0 1 1-2.2-5.3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M19.6 4.8v4.2h-4.2" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="control-tip" aria-hidden="true">Replay flows</span>
       </button>
     </div>
   </header>
@@ -52,25 +69,56 @@
     <div id="stage">
       <svg id="map" role="group" aria-describedby="map-help"></svg>
       <div id="legend"></div>
-      <div id="tip" hidden></div>
+      <div id="tip" role="tooltip" hidden></div>
     </div>
-    <aside id="panel" hidden></aside>
+    <aside id="panel" aria-labelledby="panel-title" hidden></aside>
   </main>
+  <footer><a id="download-data" href="data/japan_us_investment_data.zip" aria-haspopup="dialog" aria-controls="notes">Download data</a><button type="button" id="about-data" aria-haspopup="dialog" aria-controls="notes">About the data &amp; sources</button></footer>
   </div>
 
   <dialog id="notes" aria-labelledby="notes-title">
+    <div class="dialog-header">
+      <div class="dialog-heading">
+        <h2 id="notes-title">Data &amp; sources</h2>
+        <button type="button" id="notes-close" class="dialog-close" aria-label="Close data and sources" autofocus>×</button>
+      </div>
+      <div class="dialog-tabs" role="tablist" aria-label="Data and sources sections">
+        <button type="button" id="about-tab" role="tab" aria-controls="about-figures" aria-selected="true">About these figures</button>
+        <button type="button" id="downloads-tab" role="tab" aria-controls="downloads" aria-selected="false" tabindex="-1">Download data</button>
+      </div>
+    </div>
     <div class="dialog-body">
-      <h2 id="notes-title">About these figures</h2>
-      <p>State color is the documented subtotal for 2014–29 Oct 2026. Deeper green is a larger amount. A hatched state has a record and no total — that blank is not zero.</p>
-      <p>The $41.036 billion is not FDI stock and not a verified transfer from Japan. Click a company to see its other U.S. states.</p>
-      <form method="dialog">
-        <button type="submit" class="text-btn">Close</button>
-      </form>
+      <section id="about-figures" role="tabpanel" aria-labelledby="about-tab">
+      <h3>About these figures</h3>
+      <p>State color is the documented subtotal for 2014–29 Oct 2026. Larger amounts are darker green in the light theme and brighter green in the dark theme. A hatched state has a record and no total. That blank is not zero.</p>
+      <p><span id="methods-total">The $41.04 billion</span> sums sourced, state-specific project commitments, completed project totals and acquisition prices. It is not foreign direct investment (FDI) stock, an annual investment flow, or a verified transfer from Japan. Announced scope does not establish how much was spent. Unallocated deals and presence-only records are excluded from the subtotal.</p>
+      <p>Sources include company releases and reports, state and local government announcements, regulatory filings and public records. Each record links to its source. Full project scopes are counted once; missing state amounts remain blank. This is a documented ledger, not a complete census of Japanese investment. Click a company to see its other U.S. states.</p>
+      <p class="credits">Map: U.S. Census / Natural Earth state shapes via <a href="https://github.com/topojson/us-atlas">us-atlas</a>; Natural Earth Japan outline via <a href="https://github.com/topojson/world-atlas">world-atlas</a>; drawn with <a href="https://d3js.org/">D3</a>. Fonts: <a href="https://rsms.me/inter/">Inter</a> and <a href="https://github.com/productiontype/Newsreader">Newsreader</a>, under the SIL Open Font License.</p>
+      </section>
+      <section class="download-section" id="downloads" role="tabpanel" aria-labelledby="downloads-tab" hidden>
+        <h3 id="downloads-title" tabindex="-1">Download data</h3>
+        <p>67 sourced records and 51 states, including DC. Research cutoff: 29 October 2026. Amounts are in U.S. dollars, millions. Blank amounts are missing, not zero.</p>
+        <ul class="download-list">
+          <li><a href="data/japan_us_investment_data.zip" download><strong>All formats · ZIP</strong><span class="file-size">460 KB</span></a></li>
+          <li><a href="data/japan_us_investment_records.csv" download><span>CSV · Records</span><span class="file-size">82 KB</span></a></li>
+          <li><a href="data/japan_us_investment_states.csv" download><span>CSV · States</span><span class="file-size">2.4 KB</span></a></li>
+          <li><a href="data/japan_us_investment.xlsx" download><span>Excel · Records, States &amp; codebook</span><span class="file-size">55 KB</span></a></li>
+          <li><a href="data/japan_us_investment_records.dta" download><span>Stata · Records</span><span class="file-size">199 KB</span></a></li>
+          <li><a href="data/japan_us_investment_states.dta" download><span>Stata · States</span><span class="file-size">12 KB</span></a></li>
+          <li><a href="data/japan_us_investment.gpkg" download><span>GeoPackage · States &amp; projects for QGIS</span><span class="file-size">484 KB</span></a></li>
+          <li><a href="data/CODEBOOK.md" download><span>Codebook · Definitions &amp; limitations</span><span class="file-size">14 KB</span></a></li>
+          <li><a href="data/import_stata.do" download><span>Stata import &amp; labeling script</span><span class="file-size">7.5 KB</span></a></li>
+        </ul>
+        <p>Data compilation: <a href="https://creativecommons.org/licenses/by/4.0/">Creative Commons Attribution 4.0 (CC BY 4.0)</a>. Source materials and company marks retain their own rights.</p>
+        <h3>Suggested citation</h3>
+        <p class="citation-text" id="data-citation">Agunias, E. (2026). Japanese investment in U.S. states, 2014 to October 2026 [Data set]. https://edg-r.github.io/japan-us-investment-map/</p>
+        <button type="button" class="text-btn" id="copy-citation">Copy citation</button><span class="citation-status" id="citation-status" role="status" aria-live="polite"></span>
+      </section>
     </div>
   </dialog>
 
   <noscript>
-    <p class="noscript">This map needs JavaScript. The documented subtotal is $41.036 billion across 41 states. Ten states have records without a state total.</p>
+    <p class="noscript">This map needs JavaScript. The documented subtotal is $41.04 billion across 41 states. Ten states have records without a state total.</p>
   </noscript>
 
   <script src="vendor/d3.min.js"></script>
@@ -78,5 +126,6 @@
   <script src="js/atlas.js"></script>
   <script src="js/data.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/downloads.js"></script>
 </body>
 </html>
