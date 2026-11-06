@@ -72,7 +72,7 @@
   const MIN = d3.min(totals);
   const MAX = d3.max(totals);
   const maxFlow = d3.max(data.projects, (p) => p.amount) || MAX;
-  const widthScale = d3.scaleSqrt().domain([0, maxFlow]).range([0.65, 4]);
+  const widthScale = d3.scaleSqrt().domain([0, maxFlow]).range([1.6, 7.5]);
   const touchInput = window.matchMedia("(hover: none), (pointer: coarse)");
 
   const qMode = new URLSearchParams(location.search).get("mode");
@@ -1207,7 +1207,7 @@
         .attr("d", shape.d)
         .attr("stroke", d.quiet ? "var(--flow-quiet)" : flowColor)
         .attr("stroke-opacity", 0.27)
-        .attr("stroke-width", d.quiet ? 0.8 : widthScale(d.amount))
+        .attr("stroke-width", d.quiet ? 1.2 : widthScale(d.amount))
         .node();
       let mark;
       if (d.quiet) {
@@ -1219,7 +1219,7 @@
           .attr("fill", "var(--flow-quiet)")
           .node();
       } else {
-        const size = Math.max(4, Math.min(9, widthScale(d.amount) * 1.8));
+        const size = Math.max(5, Math.min(12, widthScale(d.amount) * 1.35));
         mark = g.append("path")
           .attr("class", "arrow mark")
           .attr("d", arrowPath(shape.c, d.xy, size))
